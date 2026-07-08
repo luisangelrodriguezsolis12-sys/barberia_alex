@@ -1,0 +1,2987 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Casa Negra Barbería</title>
+<meta name="description" content="Transportes LR — Traslados turísticos de clase ejecutiva desde Guadalajara. Flota premium, choferes certificados y tours a Mazamitla, Tapalpa, Tequila, San Juan de los Lagos y más. Cotiza por WhatsApp.">
+<meta name="keywords" content="transporte turistico Guadalajara, renta de van con chofer, tours Jalisco, Sprinter, Urvan, Mazamitla, Tapalpa, Tequila, San Juan de los Lagos">
+<meta name="theme-color" content="#0A0C10">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Casa Negra">
+<link rel="canonical" href="https://transporteslr.mx/">
+<!-- Open Graph (al compartir el enlace en WhatsApp/Facebook) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Transportes LR · Transporte Turístico Premium en Guadalajara">
+<meta property="og:description" content="Flota ejecutiva, puntualidad impecable y rutas en todo México. Cotiza tu traslado en 1 minuto por WhatsApp.">
+<meta property="og:image" content="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=1200">
+<meta property="og:locale" content="es_MX">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23C9922B'/%3E%3Ctext x='50' y='68' font-size='52' font-family='Arial' font-weight='bold' text-anchor='middle' fill='%230A0C10'%3ELR%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- GSAP + ScrollTrigger + SplitText (CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- Firebase (compat SDK, para panel de edición del cliente) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+/* ════════════════════════════════════════
+   VARIABLES & RESET
+════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --ink:#0A0C10;
+  --ink2:#13161F;
+  --ink3:#1C2030;
+  --gold:#C9922B;
+  --gold-l:#E8B455;
+  --gold-xl:#F5CC7A;
+  --cyan:#00C4AA;
+  --white:#FFFFFF;
+  --off:#F5F4EF;
+  --muted:#7C8496;
+  --r:5%;          /* section side padding */
+}
+html{scroll-behavior:smooth;font-size:16px;}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--off);color:var(--ink);
+  overflow-x:hidden;
+}
+h1,h2,h3,h4,.brand,.stat-num{font-family:'Syne',sans-serif;}
+img{display:block;max-width:100%;}
+a{text-decoration:none;}
+ 
+/* ════════════════════════════════════════
+   CURSOR
+════════════════════════════════════════ */
+#cur{
+  position:fixed;width:10px;height:10px;
+  background:var(--gold);border-radius:50%;
+  pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+  transition:width .2s,height .2s,background .2s;
+}
+#cur-ring{
+  position:fixed;width:38px;height:38px;
+  border:1.5px solid rgba(201,146,43,.5);border-radius:50%;
+  pointer-events:none;z-index:9998;
+  transform:translate(-50%,-50%);
+  transition:width .25s,height .25s,border-color .25s;
+}
+body.hovering #cur{width:18px;height:18px;background:var(--gold-l);}
+body.hovering #cur-ring{width:52px;height:52px;border-color:rgba(201,146,43,.8);}
+ 
+/* ════════════════════════════════════════
+   LOADER
+════════════════════════════════════════ */
+#loader{
+  position:fixed;inset:0;z-index:9500;
+  background:var(--ink);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:28px;
+}
+.ld-wordmark{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:2rem;letter-spacing:3px;color:var(--white);
+  overflow:hidden;
+}
+.ld-wordmark span{color:var(--gold);}
+.ld-line{
+  width:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-l));
+  border-radius:2px;
+}
+.ld-pct{
+  font-size:.72rem;letter-spacing:3px;
+  color:rgba(255,255,255,.3);
+}
+ 
+/* ════════════════════════════════════════
+   CANVAS PARTÍCULAS
+════════════════════════════════════════ */
+#pcv{
+  position:fixed;inset:0;z-index:0;
+  pointer-events:none;opacity:.4;
+}
+ 
+/* ════════════════════════════════════════
+   NAV
+════════════════════════════════════════ */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:400;
+  height:68px;padding:0 var(--r);
+  display:flex;align-items:center;justify-content:space-between;
+  transition:background .4s,box-shadow .4s;
+}
+nav.stuck{
+  background:rgba(10,12,16,.96);
+  box-shadow:0 1px 0 rgba(201,146,43,.18);
+  backdrop-filter:blur(18px);
+}
+.brand{
+  display:flex;align-items:center;gap:10px;
+  color:var(--white);font-size:1.25rem;font-weight:800;
+  letter-spacing:.5px;
+}
+.brand-ico{
+  width:36px;height:36px;border-radius:10px;
+  background:var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--ink);font-size:.9rem;
+  box-shadow:0 0 0 0 rgba(201,146,43,.5);
+  animation:icoPulse 3s infinite;
+}
+@keyframes icoPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(201,146,43,.4);}
+  50%{box-shadow:0 0 0 8px rgba(201,146,43,0);}
+}
+.brand em{color:var(--gold);font-style:normal;}
+.nav-links{display:flex;align-items:center;gap:36px;}
+.nav-link{
+  color:rgba(255,255,255,.55);font-size:.82rem;
+  font-weight:500;letter-spacing:.3px;
+  position:relative;transition:color .25s;
+}
+.nav-link::after{
+  content:'';position:absolute;left:0;bottom:-3px;
+  width:100%;height:1px;background:var(--gold);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .3s;
+}
+.nav-link:hover{color:var(--white);}
+.nav-link:hover::after{transform:scaleX(1);}
+.nav-cta{
+  background:var(--gold);color:var(--ink);
+  font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;
+  text-transform:uppercase;letter-spacing:.5px;
+  padding:10px 22px;border-radius:100px;
+  border:none;cursor:pointer;
+  overflow:hidden;position:relative;
+  transition:background .25s,transform .2s,box-shadow .25s;
+}
+.nav-cta::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.28) 50%,transparent 75%);
+  transform:translateX(-100%);transition:transform .5s;
+}
+.nav-cta:hover::before{transform:translateX(100%);}
+.nav-cta:hover{background:var(--gold-l);transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,146,43,.35);}
+ 
+/* hamburger */
+.hbg{
+  display:none;flex-direction:column;gap:5px;
+  background:none;border:none;cursor:pointer;padding:6px;z-index:410;
+}
+.hbg span{
+  display:block;width:22px;height:2px;
+  background:var(--white);border-radius:2px;
+  transition:transform .3s,opacity .3s,width .3s;
+}
+.hbg.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hbg.open span:nth-child(2){opacity:0;width:0;}
+.hbg.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+ 
+/* drawer */
+.drawer{
+  display:none;position:fixed;inset:0;z-index:405;
+  background:rgba(10,12,16,.98);backdrop-filter:blur(20px);
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:40px;opacity:0;pointer-events:none;
+  transition:opacity .35s;
+}
+.drawer.open{opacity:1;pointer-events:all;}
+.drawer a{
+  font-family:'Syne',sans-serif;font-size:2rem;font-weight:700;
+  color:rgba(255,255,255,.65);transition:color .25s,transform .3s;
+  transform:translateX(-20px);
+}
+.drawer.open a{transform:translateX(0);}
+.drawer a:hover{color:var(--gold);}
+.drawer .d-cta{
+  background:var(--gold)!important;color:var(--ink)!important;
+  font-size:1rem!important;padding:14px 38px;border-radius:100px;
+  transform:none!important;
+}
+ 
+/* ════════════════════════════════════════
+   HERO
+════════════════════════════════════════ */
+.hero{
+  min-height:100vh;
+  background:linear-gradient(145deg,#060810 0%,#0c1020 55%,#101528 100%);
+  padding:0 var(--r);
+  display:flex;align-items:center;
+  position:relative;overflow:hidden;
+}
+/* Grid decorativo */
+.hero-grid-bg{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:72px 72px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%);
+}
+/* Glow orbs */
+.hero-orb{
+  position:absolute;border-radius:50%;pointer-events:none;
+  filter:blur(80px);
+}
+.hero-orb-1{
+  width:55vw;height:55vw;top:-20%;left:-15%;
+  background:radial-gradient(circle,rgba(201,146,43,.09) 0%,transparent 70%);
+  animation:orb1 9s ease-in-out infinite alternate;
+}
+.hero-orb-2{
+  width:40vw;height:40vw;bottom:-20%;right:-10%;
+  background:radial-gradient(circle,rgba(0,196,170,.06) 0%,transparent 70%);
+  animation:orb2 12s ease-in-out infinite alternate;
+}
+@keyframes orb1{0%{transform:translate(0,0) scale(1);}100%{transform:translate(40px,-50px) scale(1.1);}}
+@keyframes orb2{0%{transform:translate(0,0);}100%{transform:translate(-30px,40px) scale(1.08);}}
+ 
+.hero-inner{
+  max-width:1160px;margin:0 auto;width:100%;
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:64px;align-items:center;
+  padding:130px 0 90px;
+  position:relative;z-index:2;
+}
+/* eyebrow */
+.eyebrow{
+  display:inline-flex;align-items:center;gap:10px;
+  background:rgba(201,146,43,.08);
+  border:1px solid rgba(201,146,43,.22);
+  color:var(--gold-l);
+  font-size:.7rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;
+  padding:7px 16px;border-radius:100px;margin-bottom:26px;
+  opacity:0; /* GSAP will animate */
+}
+.eyebrow .pulse-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--gold);
+  animation:pdot 2s ease-in-out infinite;
+}
+@keyframes pdot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.3;transform:scale(.7);}}
+ 
+.hero-title{
+  font-size:clamp(2.6rem,5.2vw,4.5rem);
+  font-weight:800;line-height:1.03;
+  letter-spacing:-2.5px;color:var(--white);
+  margin-bottom:22px;
+  overflow:hidden;
+}
+.hero-title em{font-style:normal;color:var(--gold);}
+.line-wrap{overflow:hidden;display:block;}/* each line wraps for slide-up */
+.hero-sub{
+  color:rgba(255,255,255,.45);font-size:1.04rem;
+  line-height:1.78;max-width:470px;margin-bottom:42px;
+  opacity:0;
+}
+.hero-btns{display:flex;gap:14px;flex-wrap:wrap;opacity:0;}
+ 
+.btn-gold{
+  display:inline-flex;align-items:center;gap:9px;
+  background:var(--gold);color:var(--ink);
+  font-family:'Syne',sans-serif;font-weight:700;font-size:.86rem;
+  text-transform:uppercase;letter-spacing:.5px;
+  padding:14px 28px;border-radius:100px;border:none;cursor:pointer;
+  position:relative;overflow:hidden;transition:background .25s,transform .25s,box-shadow .25s;
+}
+.btn-gold::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.3) 50%,transparent 75%);
+  transform:translateX(-100%);transition:transform .55s;
+}
+.btn-gold:hover::before{transform:translateX(100%);}
+.btn-gold:hover{background:var(--gold-l);transform:translateY(-3px);box-shadow:0 12px 30px rgba(201,146,43,.38);}
+ 
+.btn-ghost{
+  display:inline-flex;align-items:center;gap:9px;
+  background:transparent;color:rgba(255,255,255,.75);
+  font-family:'Syne',sans-serif;font-weight:600;font-size:.86rem;
+  padding:14px 28px;border-radius:100px;
+  border:1px solid rgba(255,255,255,.16);cursor:pointer;
+  transition:all .25s;
+}
+.btn-ghost:hover{border-color:rgba(255,255,255,.45);color:var(--white);transform:translateY(-2px);}
+ 
+/* Hero visual */
+.hero-visual{position:relative;opacity:0;}
+.hero-photo{
+  border-radius:26px;overflow:hidden;
+  height:460px;position:relative;
+}
+.hero-photo img{width:100%;height:100%;object-fit:cover;filter:brightness(.75);}
+.hero-photo::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(10,12,16,.75) 0%,transparent 55%);
+}
+/* Floating frame */
+.h-frame{
+  position:absolute;top:-12px;right:-12px;
+  width:calc(100% - 16px);height:calc(100% - 16px);
+  border:1.5px solid rgba(201,146,43,.18);
+  border-radius:26px;pointer-events:none;
+  animation:framePulse 5s ease-in-out infinite;
+}
+@keyframes framePulse{
+  0%,100%{opacity:.5;}50%{opacity:1;transform:translate(-2px,2px);}
+}
+/* Badge bottom */
+.h-badge{
+  position:absolute;bottom:20px;left:20px;z-index:3;
+  background:rgba(10,12,16,.9);
+  border:1px solid rgba(201,146,43,.25);
+  border-radius:14px;padding:14px 18px;backdrop-filter:blur(8px);
+}
+.h-badge p{color:rgba(255,255,255,.4);font-size:.65rem;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px;}
+.h-badge strong{color:var(--gold);font-family:'Syne',sans-serif;font-size:1.05rem;}
+/* Badge float top */
+.h-badge2{
+  position:absolute;top:18px;right:-16px;z-index:5;
+  background:var(--gold);color:var(--ink);
+  border-radius:14px;padding:11px 16px;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:.75rem;
+  letter-spacing:.3px;text-transform:uppercase;
+  box-shadow:0 8px 24px rgba(201,146,43,.4);
+  animation:floatY 3.5s ease-in-out infinite;
+}
+@keyframes floatY{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
+ 
+/* scroll hint */
+.scroll-hint{
+  position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+  z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;
+  color:rgba(255,255,255,.25);font-size:.65rem;letter-spacing:2.5px;text-transform:uppercase;
+  opacity:0;
+}
+.scroll-mouse{
+  width:22px;height:34px;border:1.5px solid rgba(255,255,255,.18);
+  border-radius:100px;display:flex;align-items:flex-start;
+  justify-content:center;padding-top:6px;
+}
+.scroll-dot{
+  width:3px;height:3px;background:var(--gold);border-radius:50%;
+  animation:sd 2s ease-in-out infinite;
+}
+@keyframes sd{0%{transform:translateY(0);opacity:1;}100%{transform:translateY(12px);opacity:0;}}
+ 
+/* ── HERO 3D GLOBE ── */
+.globe-stage{
+  position:relative;height:460px;width:100%;
+  display:flex;align-items:center;justify-content:center;
+}
+.globe-glow{
+  position:absolute;width:78%;height:78%;border-radius:50%;
+  background:radial-gradient(circle,rgba(201,146,43,.22) 0%,rgba(201,146,43,.05) 42%,transparent 72%);
+  filter:blur(18px);pointer-events:none;
+  animation:gPulse 6s ease-in-out infinite;
+}
+@keyframes gPulse{0%,100%{transform:scale(1);opacity:.85;}50%{transform:scale(1.07);opacity:1;}}
+#globe-wrap{position:absolute;inset:0;cursor:grab;touch-action:none;}
+#globe-wrap:active{cursor:grabbing;}
+#globe-wrap canvas{display:block;}
+.globe-ring{
+  position:absolute;width:102%;height:102%;border-radius:50%;
+  border:1px solid rgba(201,146,43,.14);pointer-events:none;
+  animation:gSpin 28s linear infinite;
+}
+.globe-ring::before{
+  content:'';position:absolute;top:-3px;left:50%;transform:translateX(-50%);
+  width:6px;height:6px;border-radius:50%;background:var(--gold-l);
+  box-shadow:0 0 12px 2px rgba(232,180,85,.7);
+}
+@keyframes gSpin{from{transform:rotate(0);}to{transform:rotate(360deg);}}
+.g-badge{
+  position:absolute;z-index:6;display:flex;align-items:center;gap:10px;
+  background:rgba(10,12,16,.72);border:1px solid rgba(201,146,43,.25);
+  backdrop-filter:blur(10px);border-radius:14px;padding:10px 14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+}
+.g-badge i{color:var(--gold);font-size:1rem;}
+.g-badge strong{display:block;font-family:'Syne',sans-serif;color:var(--white);font-size:.86rem;line-height:1.1;}
+.g-badge span{color:rgba(255,255,255,.42);font-size:.66rem;text-transform:uppercase;letter-spacing:.5px;}
+.g-badge-tl{top:4%;left:-4%;animation:floatY 4s ease-in-out infinite;}
+.g-badge-br{bottom:7%;right:-4%;animation:floatY 4.6s ease-in-out infinite .6s;}
+.g-fallback{
+  position:absolute;inset:0;border-radius:24px;overflow:hidden;display:none;
+}
+.g-fallback.on{display:block;}
+.g-fallback img{width:100%;height:100%;object-fit:cover;filter:brightness(.72);}
+.g-fallback::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(10,12,16,.7),transparent 55%);}
+@media(max-width:768px){
+  .globe-stage{height:300px;}
+  .g-badge span{display:none;}
+  .g-badge-tl{left:0;top:2%;} .g-badge-br{right:0;}
+}
+@media(max-width:480px){
+  .globe-stage{height:260px;}
+  .g-badge{padding:8px 11px;gap:7px;}
+}
+ 
+/* ════════════════════════════════════════
+   STATS BAR
+════════════════════════════════════════ */
+.stats{
+  background:var(--ink);
+  border-top:1px solid rgba(201,146,43,.1);
+  padding:0 var(--r);
+}
+.stats-inner{
+  max-width:1160px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(4,1fr);
+}
+.stat{
+  padding:32px 20px;text-align:center;position:relative;
+  border-right:1px solid rgba(255,255,255,.05);
+  transition:background .3s;
+}
+.stat:last-child{border-right:none;}
+.stat:hover{background:rgba(201,146,43,.04);}
+.stat-num{
+  display:block;font-size:2.4rem;font-weight:800;
+  color:var(--gold);letter-spacing:-1px;
+  transform:translateY(20px);opacity:0; /* GSAP */
+}
+.stat-lbl{color:rgba(255,255,255,.3);font-size:.74rem;letter-spacing:.5px;margin-top:4px;}
+ 
+/* ════════════════════════════════════════
+   SECTION COMMONS
+════════════════════════════════════════ */
+section{padding:100px var(--r);}
+.s-inner{max-width:1160px;margin:0 auto;}
+.s-label{
+  display:inline-flex;align-items:center;gap:10px;
+  font-size:.68rem;font-weight:700;letter-spacing:2.5px;
+  text-transform:uppercase;color:var(--gold);margin-bottom:14px;
+}
+.s-label::before{content:'';width:22px;height:2px;background:var(--gold);border-radius:2px;}
+.s-h{font-size:clamp(1.9rem,3.2vw,2.7rem);font-weight:800;letter-spacing:-.5px;line-height:1.1;}
+.s-sub{color:var(--muted);font-size:.98rem;line-height:1.75;margin-top:10px;max-width:520px;}
+ 
+/* GSAP hidden states for scroll reveals */
+.g-fade{opacity:0;transform:translateY(36px);}
+.g-left{opacity:0;transform:translateX(-40px);}
+.g-right{opacity:0;transform:translateX(40px);}
+.g-scale{opacity:0;transform:scale(.92);}
+ 
+/* ════════════════════════════════════════
+   FLOTA
+════════════════════════════════════════ */
+#flota{background:var(--white);}
+.fleet-head{
+  display:flex;justify-content:space-between;
+  align-items:flex-end;margin-bottom:52px;gap:20px;
+}
+.fleet-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;}
+.fleet-card{
+  border-radius:24px;overflow:hidden;
+  border:1px solid rgba(0,0,0,.06);
+  background:var(--off);
+  position:relative;
+  transition:transform .45s cubic-bezier(.23,1,.32,1),box-shadow .45s;
+}
+.fleet-card:hover{transform:translateY(-10px);box-shadow:0 28px 56px rgba(0,0,0,.1);}
+.fc-img{height:240px;overflow:hidden;position:relative;}
+.fc-img img{width:100%;height:100%;object-fit:cover;transition:transform .65s cubic-bezier(.23,1,.32,1);}
+.fleet-card:hover .fc-img img{transform:scale(1.07);}
+.fc-num{
+  position:absolute;bottom:8px;right:14px;
+  font-family:'Syne',sans-serif;font-size:6rem;font-weight:800;
+  color:rgba(255,255,255,.1);line-height:1;letter-spacing:-6px;
+  pointer-events:none;
+}
+.fc-body{padding:28px 30px;}
+.fc-tag{
+  display:inline-block;font-size:.66rem;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;
+  padding:5px 13px;border-radius:100px;margin-bottom:12px;
+}
+.fc-tag.prem{background:rgba(201,146,43,.1);color:var(--gold);border:1px solid rgba(201,146,43,.2);}
+.fc-tag.std{background:rgba(0,0,0,.05);color:var(--muted);border:1px solid rgba(0,0,0,.06);}
+.fc-card-h{font-size:1.4rem;font-weight:800;color:var(--ink);margin-bottom:8px;}
+.specs{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0;}
+.spec{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted);}
+.spec i{color:var(--cyan);}
+.fc-body p{color:var(--muted);font-size:.88rem;line-height:1.65;}
+.fc-cta{
+  display:inline-flex;align-items:center;gap:8px;
+  color:var(--gold);font-size:.82rem;font-weight:600;
+  margin-top:18px;background:none;border:none;cursor:pointer;padding:0;
+  transition:gap .25s,color .25s;
+}
+.fc-cta:hover{gap:14px;color:var(--gold-l);}
+ 
+/* ════════════════════════════════════════
+   DESTINOS
+════════════════════════════════════════ */
+#destinos{background:var(--off);}
+.dest-head{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:40px;align-items:end;margin-bottom:48px;
+}
+.dest-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:auto auto;
+  gap:18px;
+}
+.dc{
+  border-radius:22px;overflow:hidden;
+  position:relative;cursor:pointer;height:300px;
+  background:#1a1d26; /* fondo oscuro mientras carga la imagen */
+  transition:transform .45s cubic-bezier(.23,1,.32,1),box-shadow .45s;
+}
+.dc.big{grid-column:span 2;height:360px;}
+.dc img{
+  width:100%;height:100%;object-fit:cover;
+  transition:transform .65s cubic-bezier(.23,1,.32,1);
+}
+.dc:hover{transform:translateY(-8px);box-shadow:0 28px 52px rgba(0,0,0,.2);}
+.dc:hover img{transform:scale(1.1);}
+.dc-ov{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(10,12,16,.95) 0%,rgba(10,12,16,.35) 45%,transparent 100%);
+  transition:opacity .4s;
+}
+.dc:hover .dc-ov{opacity:.8;}
+/* sweep line */
+.dc-line{
+  position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  transform:scaleX(0);transform-origin:center;
+  transition:transform .45s;
+}
+.dc:hover .dc-line{transform:scaleX(1);}
+.dc-content{position:absolute;bottom:0;left:0;right:0;padding:24px;}
+.dc-tag{
+  display:inline-block;font-size:.63rem;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--cyan);border:1px solid rgba(0,196,170,.35);
+  padding:4px 10px;border-radius:100px;
+  background:rgba(0,196,170,.08);margin-bottom:8px;
+}
+.dc h3{font-size:1.1rem;font-weight:700;color:var(--white);}
+.dc-badge{
+  position:absolute;top:14px;right:14px;
+  background:rgba(201,146,43,.88);color:var(--ink);
+  font-size:.62rem;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  padding:5px 11px;border-radius:100px;
+  transition:background .25s,transform .25s;
+}
+.dc:hover .dc-badge{background:var(--gold);transform:scale(1.06);}
+ 
+/* ════════════════════════════════════════
+   TESTIMONIAL
+════════════════════════════════════════ */
+.testi{
+  background:var(--ink);padding:88px var(--r);
+  position:relative;overflow:hidden;
+}
+.testi-deco{
+  position:absolute;top:-60px;left:2%;
+  font-family:'Syne',sans-serif;font-size:26rem;font-weight:800;
+  color:rgba(201,146,43,.03);line-height:1;pointer-events:none;
+  user-select:none;
+}
+.testi-inner{
+  max-width:820px;margin:0 auto;
+  text-align:center;position:relative;z-index:1;
+}
+.testi-stars{display:flex;gap:7px;justify-content:center;margin-bottom:24px;}
+.testi-stars i{color:var(--gold);font-size:1rem;}
+.testi-q{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(1.15rem,2.4vw,1.65rem);
+  font-weight:600;color:var(--white);line-height:1.55;margin-bottom:28px;
+}
+.testi-auth{color:var(--muted);font-size:.84rem;}
+.testi-auth span{color:var(--gold-l);}
+ 
+/* ════════════════════════════════════════
+   COTIZAR
+════════════════════════════════════════ */
+#cotizar{
+  background:var(--ink2);
+  position:relative;overflow:hidden;
+}
+#cotizar::before{
+  content:'';position:absolute;top:-30%;right:-10%;
+  width:700px;height:700px;
+  background:radial-gradient(circle,rgba(201,146,43,.055) 0%,transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
+#cotizar::after{
+  content:'';position:absolute;bottom:-30%;left:-10%;
+  width:500px;height:500px;
+  background:radial-gradient(circle,rgba(0,196,170,.03) 0%,transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
+.cot-grid{
+  display:grid;grid-template-columns:1fr 1.15fr;
+  gap:80px;align-items:start;
+  max-width:1160px;margin:0 auto;
+  position:relative;z-index:1;
+}
+.cot-left .s-h{color:var(--white);}
+.cot-left .s-sub{color:rgba(255,255,255,.38);}
+.perks{margin-top:44px;display:flex;flex-direction:column;gap:18px;}
+.perk{display:flex;align-items:flex-start;gap:14px;}
+.perk-ico{
+  width:42px;height:42px;min-width:42px;border-radius:12px;
+  background:rgba(201,146,43,.08);border:1px solid rgba(201,146,43,.18);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gold);font-size:.9rem;
+  transition:background .3s,transform .3s;
+}
+.perk:hover .perk-ico{background:rgba(201,146,43,.16);transform:scale(1.08);}
+.perk-txt strong{display:block;color:var(--white);font-size:.88rem;margin-bottom:2px;}
+.perk-txt span{color:rgba(255,255,255,.3);font-size:.78rem;}
+ 
+/* form card */
+.form-card{
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:28px;padding:42px;
+  backdrop-filter:blur(10px);
+  position:relative;overflow:hidden;
+}
+.form-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+.fg{margin-bottom:22px;}
+.fg label{
+  display:block;font-size:.7rem;font-weight:600;
+  letter-spacing:1.5px;text-transform:uppercase;
+  color:rgba(255,255,255,.35);margin-bottom:8px;
+}
+.fg input,.fg select{
+  width:100%;background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:14px;padding:14px 16px;
+  color:var(--white);font-family:'Inter',sans-serif;font-size:.94rem;
+  outline:none;-webkit-appearance:none;
+  transition:border-color .25s,background .25s,box-shadow .25s;
+}
+.fg input::placeholder{color:rgba(255,255,255,.18);}
+.fg select option{background:var(--ink2);}
+.fg input:focus,.fg select:focus{
+  border-color:rgba(201,146,43,.55);
+  background:rgba(255,255,255,.07);
+  box-shadow:0 0 0 3px rgba(201,146,43,.08);
+}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.btn-submit{
+  width:100%;background:var(--gold);color:var(--ink);
+  font-family:'Syne',sans-serif;font-weight:800;font-size:.94rem;
+  text-transform:uppercase;letter-spacing:.5px;
+  padding:17px;border-radius:100px;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  position:relative;overflow:hidden;
+  transition:background .25s,transform .25s,box-shadow .25s;
+  margin-top:10px;
+}
+.btn-submit::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.28) 50%,transparent 75%);
+  transform:translateX(-100%);transition:transform .55s;
+}
+.btn-submit:hover::before{transform:translateX(100%);}
+.btn-submit:hover{background:var(--gold-l);transform:translateY(-2px);box-shadow:0 10px 28px rgba(201,146,43,.38);}
+ 
+/* ════════════════════════════════════════
+   MODALES
+════════════════════════════════════════ */
+.moverlay{
+  display:none;position:fixed;inset:0;z-index:800;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(10px);
+  align-items:center;justify-content:center;
+  padding:16px;overflow-y:auto;
+}
+.moverlay.active{display:flex;}
+.mbox{
+  background:var(--white);border-radius:28px;
+  max-width:680px;width:100%;margin:auto;
+  position:relative;
+  animation:mboxIn .4s cubic-bezier(.23,1,.32,1);
+}
+@keyframes mboxIn{
+  from{opacity:0;transform:translateY(44px) scale(.94);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+.mclose{
+  position:absolute;top:14px;right:14px;z-index:10;
+  background:rgba(0,0,0,.45);border:none;border-radius:50%;
+  width:38px;height:38px;color:var(--white);font-size:1rem;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .2s,transform .25s;
+}
+.mclose:hover{background:rgba(0,0,0,.75);transform:rotate(90deg);}
+.mgallery{
+  position:relative;height:310px;
+  overflow:hidden;border-radius:22px 22px 0 0;
+}
+.mgallery img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;opacity:0;transition:opacity .5s;
+}
+.mgallery img.on{opacity:1;z-index:2;}
+.mgallery{background:#1a1d26;}
+.gnav{
+  position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
+  display:flex;gap:6px;z-index:5;
+}
+.gdot{
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(255,255,255,.3);border:none;cursor:pointer;
+  transition:background .25s,width .25s,border-radius .25s;padding:0;
+}
+.gdot.on{background:var(--gold);width:22px;border-radius:4px;}
+.garr{
+  position:absolute;top:50%;transform:translateY(-50%);z-index:5;
+  background:rgba(0,0,0,.3);border:none;color:var(--white);
+  width:38px;height:38px;border-radius:50%;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s,transform .2s;backdrop-filter:blur(4px);
+}
+.garr:hover{background:rgba(0,0,0,.7);}
+.garr.prev{left:12px;}
+.garr.next{right:12px;}
+.mbody{padding:28px 32px 32px;}
+.m-tag{
+  display:inline-block;font-size:.66rem;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--cyan);border:1px solid rgba(0,196,170,.3);
+  background:rgba(0,196,170,.06);
+  padding:4px 12px;border-radius:100px;margin-bottom:14px;
+}
+.mbox h2{font-size:1.55rem;font-weight:800;color:var(--ink);margin-bottom:10px;line-height:1.2;}
+.mdesc{color:var(--muted);font-size:.9rem;line-height:1.7;margin-bottom:20px;}
+.mlegend{
+  background:var(--off);border-left:4px solid var(--gold);
+  border-radius:3px 14px 14px 3px;
+  padding:18px 20px;font-style:italic;
+  color:#3a3a3a;font-size:.88rem;line-height:1.75;
+  position:relative;
+}
+.mlegend::before{
+  content:'"';position:absolute;top:-8px;left:12px;
+  font-family:'Syne',sans-serif;font-size:3rem;
+  color:rgba(201,146,43,.18);line-height:1;
+}
+ 
+/* ── Itinerario del tour (timeline) ── */
+.mitin{margin:22px 0 22px;}
+.mitin-head{
+  display:flex;align-items:center;gap:9px;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;
+  color:var(--ink);margin-bottom:16px;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.mitin-head i{color:var(--gold);}
+.mitin-list{list-style:none;}
+.mitin-item{
+  display:flex;gap:14px;padding:0 0 18px;position:relative;
+}
+.mitin-item::before{
+  content:'';position:absolute;left:13px;top:30px;bottom:-2px;
+  width:2px;background:linear-gradient(var(--gold),rgba(201,146,43,.12));
+}
+.mitin-item:last-child{padding-bottom:0;}
+.mitin-item:last-child::before{display:none;}
+.mitin-num{
+  min-width:28px;height:28px;border-radius:50%;
+  background:var(--gold);color:var(--ink);
+  font-family:'Syne',sans-serif;font-weight:800;font-size:.8rem;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;z-index:1;
+}
+.mitin-txt{padding-top:3px;}
+.mitin-txt strong{display:block;color:var(--ink);font-size:.92rem;margin-bottom:3px;}
+.mitin-txt span{color:var(--muted);font-size:.84rem;line-height:1.55;}
+.mincl{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+.mincl-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:.72rem;font-weight:600;color:var(--gold);
+  background:rgba(201,146,43,.08);border:1px solid rgba(201,146,43,.22);
+  padding:6px 13px;border-radius:100px;
+}
+.mincl-chip i{font-size:.7rem;}
+ 
+/* ── Mapa de ubicación en modal ── */
+.mmap-h{
+  display:flex;align-items:center;gap:8px;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;
+  text-transform:uppercase;letter-spacing:1.2px;
+  color:var(--gold);margin:24px 0 12px;
+}
+.mmap{
+  position:relative;border-radius:16px;overflow:hidden;
+  border:1px solid rgba(0,0,0,.08);height:230px;
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+.mmap iframe{width:100%;height:100%;border:0;display:block;filter:saturate(1.05);}
+.mmap-link{
+  display:inline-flex;align-items:center;gap:7px;margin-top:12px;
+  font-size:.8rem;font-weight:600;color:var(--gold);
+  background:rgba(201,146,43,.08);border:1px solid rgba(201,146,43,.22);
+  padding:9px 16px;border-radius:100px;transition:background .25s,transform .25s;
+}
+.mmap-link:hover{background:rgba(201,146,43,.16);transform:translateY(-1px);}
+.mlegend-h{
+  display:flex;align-items:center;gap:8px;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;
+  text-transform:uppercase;letter-spacing:1.2px;
+  color:var(--gold);margin-bottom:10px;
+}
+ 
+/* ── Botón GPS en formulario ── */
+.gps-row{display:flex;gap:10px;align-items:stretch;}
+.gps-row input{flex:1;}
+.btn-gps{
+  background:rgba(0,196,170,.12);
+  border:1px solid rgba(0,196,170,.4);
+  color:var(--cyan);border-radius:14px;
+  padding:0 16px;cursor:pointer;font-size:.92rem;
+  display:flex;align-items:center;gap:7px;white-space:nowrap;
+  font-family:'Inter',sans-serif;font-weight:600;
+  transition:background .25s,border-color .25s,color .25s;
+}
+.btn-gps:hover{background:rgba(0,196,170,.22);border-color:rgba(0,196,170,.7);}
+.btn-gps.ok{background:var(--cyan);color:var(--ink);border-color:var(--cyan);}
+.gps-note{
+  font-size:.72rem;color:rgba(255,255,255,.32);
+  margin-top:9px;display:flex;align-items:center;gap:7px;line-height:1.4;
+}
+.gps-note i{color:var(--cyan);}
+ 
+/* ════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════ */
+footer{
+  background:var(--ink);
+  border-top:1px solid rgba(201,146,43,.12);
+  padding:52px var(--r) 30px;
+}
+.ft-inner{
+  max-width:1160px;margin:0 auto;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:24px;
+}
+.ft-brand{color:var(--white);font-size:1.1rem;font-weight:800;}
+.ft-brand span{color:var(--gold);}
+.ft-links{display:flex;gap:28px;}
+.ft-links a{
+  color:rgba(255,255,255,.28);font-size:.8rem;
+  text-decoration:none;transition:color .2s;
+}
+.ft-links a:hover{color:rgba(255,255,255,.7);}
+.ft-copy{
+  width:100%;text-align:center;
+  color:rgba(255,255,255,.15);font-size:.76rem;
+  padding-top:22px;
+  border-top:1px solid rgba(255,255,255,.04);
+  margin-top:6px;
+}
+ 
+/* ════════════════════════════════════════
+   WA FLOAT
+════════════════════════════════════════ */
+.wa{
+  position:fixed;bottom:26px;right:26px;z-index:500;
+  width:60px;height:60px;border-radius:50%;
+  background:#25D366;color:var(--white);
+  display:flex;align-items:center;justify-content:center;
+  font-size:27px;text-decoration:none;
+  box-shadow:0 6px 24px rgba(37,211,102,.45);
+  transition:transform .25s,box-shadow .25s;
+}
+.wa:hover{transform:scale(1.1);box-shadow:0 10px 32px rgba(37,211,102,.6);}
+.wa::before{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  background:#25D366;opacity:.4;
+  animation:wap 2.5s infinite;
+}
+@keyframes wap{0%{transform:scale(1);opacity:.4;}100%{transform:scale(1.65);opacity:0;}}
+.wa-tip{
+  position:absolute;right:72px;
+  background:rgba(10,12,16,.92);color:var(--white);
+  font-size:.76rem;font-weight:500;white-space:nowrap;
+  padding:8px 14px;border-radius:10px;
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.wa:hover .wa-tip{opacity:1;}
+.wa-tip::after{
+  content:'';position:absolute;right:-5px;top:50%;
+  transform:translateY(-50%);
+  border:5px solid transparent;
+  border-left-color:rgba(10,12,16,.92);
+}
+
+.pwa-install-btn{
+  display:flex;position:fixed;bottom:96px;right:26px;z-index:499;
+  align-items:center;gap:8px;
+  background:var(--ink2);color:var(--gold-l);
+  border:1px solid rgba(201,146,43,.4);border-radius:100px;
+  padding:11px 18px;font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;
+  cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.35);
+  transition:transform .2s,box-shadow .2s;
+}
+.pwa-install-btn:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.45);}
+@media(max-width:768px){
+  .pwa-install-btn{bottom:84px;right:18px;padding:10px 15px;font-size:.72rem;}
+}
+ 
+/* ════════════════════════════════════════
+   SCROLLBAR
+════════════════════════════════════════ */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--ink);}
+::-webkit-scrollbar-thumb{background:var(--gold);border-radius:3px;}
+ 
+/* ════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════ */
+.hbg{display:none;}
+.drawer{display:none;}
+ 
+@media(max-width:1024px){
+  .hero-inner{gap:44px;padding:120px 0 80px;}
+  .hero-photo{height:400px;}
+  .fleet-grid{gap:20px;}
+  .dest-grid{grid-template-columns:repeat(2,1fr);}
+  .dc.big{grid-column:span 2;height:300px;}
+  .dc{height:240px;}
+  .cot-grid{gap:52px;}
+}
+ 
+@media(max-width:768px){
+  #cur,#cur-ring{display:none;}
+  nav{height:60px;padding:0 5%;}
+  .nav-links,.nav-cta{display:none;}
+  .hbg{display:flex;}
+  .drawer{display:flex;}
+  .hero{padding:0 5%;min-height:auto;}
+  .hero-inner{
+    grid-template-columns:1fr;gap:28px;
+    padding:96px 0 56px;text-align:center;
+  }
+  .eyebrow{margin:0 auto 20px;}
+  .hero-sub{margin:0 auto 36px;font-size:.96rem;}
+  .hero-btns{justify-content:center;}
+  .hero-visual{order:-1;}
+  .hero-photo{height:240px;border-radius:20px;}
+  .h-frame{display:none;}
+  .h-badge2{top:12px;right:-8px;font-size:.68rem;padding:9px 13px;}
+  .scroll-hint{display:none;}
+  .hero-orb-1,.hero-orb-2{display:none;}
+  .stats-inner{grid-template-columns:repeat(2,1fr);}
+  .stat{border-right:none;border-bottom:1px solid rgba(255,255,255,.05);padding:22px 14px;}
+  .stat:nth-child(3),.stat:nth-child(4){border-bottom:none;}
+  .stat-num{font-size:2rem;}
+  section{padding:64px 5%;}
+  .s-h{font-size:clamp(1.65rem,5vw,2.2rem);}
+  .fleet-head{flex-direction:column;align-items:flex-start;gap:14px;}
+  .fleet-head .btn-gold{width:100%;justify-content:center;}
+  .fleet-grid{grid-template-columns:1fr;gap:18px;}
+  .fc-img{height:200px;}
+  .dest-head{grid-template-columns:1fr;gap:14px;margin-bottom:28px;}
+  .dest-grid{grid-template-columns:1fr 1fr;gap:12px;}
+  .dc.big{grid-column:span 2;height:240px;}
+  .dc{height:200px;}
+  .cot-grid{grid-template-columns:1fr;gap:36px;}
+  .form-card{padding:26px 22px;}
+  .perks{display:none;}
+  .testi-deco{display:none;}
+  .testi-q{font-size:1.1rem;}
+  .mgallery{height:230px;}
+  .mbody{padding:22px 22px 26px;}
+  .mbox h2{font-size:1.25rem;}
+  .ft-inner{flex-direction:column;align-items:center;text-align:center;gap:14px;}
+  .ft-links{flex-wrap:wrap;justify-content:center;gap:14px;}
+  footer{padding:36px 5% 22px;}
+  .wa{width:54px;height:54px;font-size:24px;bottom:18px;right:18px;}
+  .wa-tip{display:none;}
+}
+ 
+@media(max-width:480px){
+  nav{height:56px;padding:0 4%;}
+  .brand{font-size:1.1rem;}
+  .brand-ico{width:30px;height:30px;border-radius:8px;font-size:.78rem;}
+  .hero-inner{padding:86px 0 48px;gap:22px;}
+  .eyebrow{font-size:.63rem;padding:6px 12px;}
+  .hero-title{font-size:clamp(1.85rem,9.5vw,2.6rem);}
+  .hero-sub{font-size:.88rem;}
+  .hero-btns{flex-direction:column;}
+  .hero-btns a,.hero-btns button{width:100%;justify-content:center;}
+  .hero-photo{height:200px;border-radius:16px;}
+  .h-badge{padding:10px 14px;}
+  .h-badge strong{font-size:.95rem;}
+  .stats-inner{grid-template-columns:repeat(2,1fr);}
+  .stat-num{font-size:1.8rem;}
+  section{padding:50px 4%;}
+  .dest-grid{grid-template-columns:1fr;gap:10px;}
+  .dc,.dc.big{grid-column:span 1;height:200px;}
+  .fg-row{grid-template-columns:1fr;}
+  .form-card{padding:20px 16px;border-radius:20px;}
+  .moverlay{padding:10px;}
+  .mgallery{height:195px;}
+  .mbody{padding:18px 18px 22px;}
+  .mbox h2{font-size:1.1rem;}
+  .mdesc{font-size:.84rem;}
+  .mlegend{font-size:.82rem;padding:14px 16px;}
+  .ft-links{gap:12px;}
+  .drawer a{font-size:1.5rem;}
+}
+ 
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}
+}
+/* ── Interacciones extra ── */
+#progress{
+  position:fixed;top:0;left:0;height:3px;width:0;z-index:600;
+  background:linear-gradient(90deg,var(--gold),var(--gold-l),var(--cyan));
+  box-shadow:0 0 10px rgba(201,146,43,.6);
+}
+.map-tip{
+  position:absolute;z-index:7;pointer-events:none;opacity:0;
+  transform:translate(-50%,-135%);transition:opacity .18s;
+  background:rgba(10,12,16,.92);border:1px solid rgba(201,146,43,.45);
+  color:#fff;font-size:.74rem;font-weight:600;white-space:nowrap;
+  padding:6px 13px;border-radius:100px;backdrop-filter:blur(6px);
+  box-shadow:0 8px 22px rgba(0,0,0,.45);
+}
+.map-tip.on{opacity:1;}
+.map-tip i{color:var(--gold);margin-right:6px;}
+.map-hint{
+  position:absolute;bottom:1%;left:50%;transform:translateX(-50%);
+  z-index:6;font-size:.64rem;letter-spacing:1px;text-transform:uppercase;
+  color:rgba(255,255,255,.42);display:flex;align-items:center;gap:7px;white-space:nowrap;
+}
+.map-hint i{color:var(--gold);animation:pdot 2s ease-in-out infinite;}
+.fleet-card,.dc{transform-style:preserve-3d;will-change:transform;}
+@media(max-width:768px){ .map-hint{font-size:.58rem;} }
+ 
+/* ════════════════════════════════════════
+   TICKET VIP 3D (confirmación)
+════════════════════════════════════════ */
+.tk-overlay{
+  display:none;position:fixed;inset:0;z-index:900;
+  background:radial-gradient(ellipse at center,rgba(10,12,16,.86),rgba(0,0,0,.94));
+  backdrop-filter:blur(12px);
+  align-items:center;justify-content:center;padding:18px;overflow-y:auto;
+  perspective:1400px;
+}
+.tk-overlay.active{display:flex;}
+.tk-confetti{position:absolute;inset:0;pointer-events:none;z-index:2;}
+.ticket{
+  position:relative;z-index:3;max-width:430px;width:100%;margin:auto;
+  background:linear-gradient(160deg,#161b27 0%,#10131c 60%,#161b27 100%);
+  border:1px solid rgba(201,146,43,.35);
+  border-radius:26px;padding:34px 30px 30px;
+  box-shadow:0 40px 90px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.03) inset,
+             0 0 60px rgba(201,146,43,.12);
+  transform-style:preserve-3d;
+  animation:tkIn .7s cubic-bezier(.16,1,.3,1);
+  transition:transform .15s ease-out;
+}
+@keyframes tkIn{
+  0%{opacity:0;transform:rotateX(-38deg) translateY(60px) scale(.85);}
+  100%{opacity:1;transform:rotateX(0) translateY(0) scale(1);}
+}
+/* sheen dorado */
+.ticket::before{
+  content:'';position:absolute;inset:0;border-radius:26px;pointer-events:none;
+  background:linear-gradient(115deg,transparent 30%,rgba(245,204,122,.16) 48%,transparent 66%);
+  background-size:250% 100%;background-position:200% 0;
+  animation:tkSheen 3.4s ease-in-out infinite;
+}
+@keyframes tkSheen{0%{background-position:200% 0;}60%,100%{background-position:-60% 0;}}
+.ticket::after{
+  content:'';position:absolute;inset:-1px;border-radius:27px;pointer-events:none;
+  background:linear-gradient(135deg,rgba(201,146,43,.5),transparent 40%,transparent 60%,rgba(0,196,170,.35));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;padding:1px;opacity:.6;
+}
+.tk-close{
+  position:absolute;top:14px;right:14px;z-index:6;
+  width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
+  background:rgba(255,255,255,.08);color:#fff;font-size:.95rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s,transform .25s;
+}
+.tk-close:hover{background:rgba(255,255,255,.18);transform:rotate(90deg);}
+.tk-icon{
+  width:66px;height:66px;margin:0 auto 16px;border-radius:50%;
+  background:rgba(0,196,170,.12);border:1px solid rgba(0,196,170,.4);
+  color:var(--cyan);font-size:1.7rem;
+  display:flex;align-items:center;justify-content:center;position:relative;z-index:4;
+  box-shadow:0 0 0 0 rgba(0,196,170,.4);animation:tkPulse 2.4s infinite;
+}
+@keyframes tkPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,196,170,.4);}50%{box-shadow:0 0 0 14px rgba(0,196,170,0);}}
+.tk-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.55rem;color:#fff;text-align:center;letter-spacing:-.5px;position:relative;z-index:4;}
+.tk-sub{color:rgba(255,255,255,.45);font-size:.84rem;text-align:center;margin-top:6px;line-height:1.5;position:relative;z-index:4;}
+.tk-body{
+  position:relative;z-index:4;margin-top:24px;
+  background:rgba(7,9,14,.6);border:1px dashed rgba(201,146,43,.3);
+  border-radius:16px;padding:20px 22px;
+}
+/* muescas tipo boleto */
+.tk-body::before,.tk-body::after{
+  content:'';position:absolute;top:50%;width:22px;height:22px;border-radius:50%;
+  background:#10131c;transform:translateY(-50%);
+}
+.tk-body::before{left:-12px;box-shadow:1px 0 0 rgba(201,146,43,.3) inset;}
+.tk-body::after{right:-12px;box-shadow:-1px 0 0 rgba(201,146,43,.3) inset;}
+.tk-row{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.tk-row:last-child{border-bottom:none;}
+.tk-k{font-size:.64rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold);font-weight:700;white-space:nowrap;}
+.tk-v{font-family:'Inter',sans-serif;font-size:.86rem;color:#fff;font-weight:500;text-align:right;}
+.tk-folio{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:14px;padding-top:14px;border-top:1px dashed rgba(201,146,43,.25);
+}
+.tk-folio span{font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.35);}
+.tk-folio strong{font-family:'Syne',sans-serif;color:var(--gold-l);font-size:.95rem;letter-spacing:1px;}
+.tk-wa{
+  position:relative;z-index:4;width:100%;margin-top:22px;
+  display:inline-flex;align-items:center;justify-content:center;gap:11px;
+  background:linear-gradient(100deg,#1faf6b,#0e9488);color:#fff;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:.92rem;letter-spacing:.5px;
+  padding:16px;border-radius:14px;text-decoration:none;overflow:hidden;
+  box-shadow:0 12px 30px rgba(16,148,136,.35);
+  transition:transform .25s,box-shadow .25s,filter .25s;
+}
+.tk-wa::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.32) 50%,transparent 75%);
+  transform:translateX(-100%);transition:transform .6s;
+}
+.tk-wa:hover::before{transform:translateX(100%);}
+.tk-wa:hover{transform:translateY(-3px);filter:brightness(1.08);box-shadow:0 18px 40px rgba(16,148,136,.5);}
+.tk-wa svg{width:22px;height:22px;fill:currentColor;}
+.tk-note{position:relative;z-index:4;color:rgba(255,255,255,.32);font-size:.7rem;text-align:center;margin-top:14px;line-height:1.5;}
+@media(max-width:480px){
+  .ticket{padding:28px 22px 24px;border-radius:22px;}
+  .tk-title{font-size:1.3rem;}
+  .tk-v{font-size:.8rem;}
+}
+
+/* ════════════════════════════════════════
+   PANEL DE ADMINISTRACIÓN (edición cliente)
+════════════════════════════════════════ */
+#adm-gate{
+  display:none;position:fixed;inset:0;z-index:9800;
+  background:rgba(6,8,12,.94);backdrop-filter:blur(10px);
+  align-items:center;justify-content:center;padding:20px;
+}
+#adm-gate.on{display:flex;}
+.adm-gate-box{
+  background:var(--ink2);border:1px solid rgba(201,146,43,.3);
+  border-radius:20px;padding:36px 32px;max-width:340px;width:100%;text-align:center;
+}
+.adm-gate-box i{color:var(--gold);font-size:1.8rem;margin-bottom:12px;}
+.adm-gate-box h3{color:#fff;font-family:'Syne',sans-serif;font-size:1.15rem;margin-bottom:6px;}
+.adm-gate-box p{color:rgba(255,255,255,.4);font-size:.8rem;margin-bottom:18px;}
+.adm-gate-box input{
+  width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;padding:12px 14px;color:#fff;font-size:.95rem;margin-bottom:12px;outline:none;text-align:center;
+}
+.adm-gate-box input:focus{border-color:var(--gold);}
+.adm-gate-box button{
+  width:100%;background:var(--gold);color:var(--ink);border:none;border-radius:12px;
+  padding:12px;font-family:'Syne',sans-serif;font-weight:800;cursor:pointer;font-size:.88rem;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.adm-gate-err{color:#ff6b6b;font-size:.76rem;margin-top:8px;display:none;}
+
+#adm-panel{
+  display:none;position:fixed;inset:0;z-index:9700;
+  background:rgba(6,8,12,.7);backdrop-filter:blur(6px);
+  align-items:flex-start;justify-content:flex-end;padding:0;
+}
+#adm-panel.on{display:flex;}
+.adm-box{
+  background:var(--ink2);border-left:1px solid rgba(201,146,43,.3);
+  height:100%;width:min(420px,100%);overflow-y:auto;
+  padding:26px 24px 100px;
+  box-shadow:-20px 0 60px rgba(0,0,0,.5);
+}
+.adm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.adm-head h2{color:#fff;font-family:'Syne',sans-serif;font-size:1.2rem;}
+.adm-head h2 span{color:var(--gold);}
+.adm-close{background:rgba(255,255,255,.08);border:none;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;}
+.adm-sec{margin-bottom:26px;}
+.adm-sec h4{
+  color:var(--gold);font-family:'Syne',sans-serif;font-size:.78rem;text-transform:uppercase;
+  letter-spacing:1.5px;margin-bottom:14px;display:flex;align-items:center;gap:8px;
+}
+.adm-row{margin-bottom:14px;}
+.adm-row label{display:block;color:rgba(255,255,255,.5);font-size:.72rem;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
+.adm-row input[type=text],.adm-row input[type=url],.adm-row input[type=tel],.adm-row textarea{
+  width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:10px;padding:10px 12px;color:#fff;font-size:.85rem;outline:none;font-family:'Inter',sans-serif;
+}
+.adm-row textarea{resize:vertical;min-height:52px;}
+.adm-row input[type=text]:focus,.adm-row input[type=url]:focus,.adm-row input[type=tel]:focus,.adm-row textarea:focus{border-color:var(--gold);}
+.adm-color-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;}
+.adm-color-row label{color:rgba(255,255,255,.6);font-size:.8rem;}
+.adm-color-row input[type=color]{width:44px;height:34px;border:none;border-radius:8px;cursor:pointer;background:none;padding:0;}
+.adm-actions{
+  position:sticky;bottom:-1px;background:var(--ink2);padding:16px 0 4px;
+  display:flex;flex-direction:column;gap:10px;border-top:1px solid rgba(255,255,255,.08);margin-top:6px;
+}
+.adm-btn-save{
+  background:var(--gold);color:var(--ink);border:none;border-radius:100px;padding:13px;
+  font-family:'Syne',sans-serif;font-weight:800;cursor:pointer;font-size:.85rem;
+  text-transform:uppercase;letter-spacing:.5px;
+}
+.adm-btn-reset{
+  background:transparent;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.15);
+  border-radius:100px;padding:11px;font-size:.78rem;cursor:pointer;
+}
+.adm-status{font-size:.76rem;text-align:center;color:var(--cyan);min-height:16px;}
+#adm-fab{
+  position:fixed;bottom:22px;left:22px;z-index:490;
+  display:flex;align-items:center;gap:8px;
+  background:var(--ink2);border:1px solid rgba(201,146,43,.4);color:var(--gold-l);
+  font-family:'Inter',sans-serif;font-size:.74rem;font-weight:600;
+  padding:9px 16px 9px 14px;border-radius:100px;cursor:pointer;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);
+  opacity:.55;transition:opacity .2s,transform .2s;
+}
+#adm-fab:hover{opacity:1;transform:translateY(-2px);}
+#adm-fab i{font-size:.8rem;}
+.adm-photo-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.adm-photo-thumb{width:56px;height:56px;border-radius:10px;object-fit:cover;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);flex-shrink:0;}
+.adm-photo-info{flex:1;min-width:0;}
+.adm-photo-info label{display:block;color:rgba(255,255,255,.6);font-size:.76rem;margin-bottom:5px;}
+.adm-photo-input{
+  width:100%;color:rgba(255,255,255,.55);font-size:.72rem;
+}
+.adm-photo-input::file-selector-button{
+  background:rgba(201,146,43,.15);border:1px solid rgba(201,146,43,.35);color:var(--gold-l);
+  border-radius:8px;padding:6px 10px;font-size:.72rem;cursor:pointer;margin-right:8px;
+}
+</style>
+</head>
+<body>
+<!-- PROGRESS -->
+<div id="progress"></div>
+ 
+<!-- LOADER -->
+<div id="loader">
+  <div class="ld-wordmark">TRANSPORTES <span>LR</span></div>
+  <div class="ld-line" id="ld-line"></div>
+  <div class="ld-pct" id="ld-pct">0%</div>
+</div>
+ 
+<!-- CURSOR -->
+<div id="cur"></div>
+<div id="cur-ring"></div>
+ 
+<!-- PARTICLES -->
+<canvas id="pcv"></canvas>
+ 
+<!-- WA -->
+<a href="https://wa.me/523343194831?text=Hola%20Transportes%20LR,%20me%20interesa%20cotizar." class="wa" target="_blank" aria-label="WhatsApp" data-wa="float">
+  <i class="fab fa-whatsapp"></i>
+  <span class="wa-tip">¡Cotiza ya!</span>
+</a>
+
+<!-- INSTALAR APP -->
+<button id="pwa-install-btn" class="pwa-install-btn"><i class="fas fa-download"></i> Instalar app</button>
+
+<!-- Instrucciones manuales de instalación (respaldo) -->
+<div class="tk-overlay" id="pwaHelpOverlay">
+  <div class="ticket" id="pwaHelpCard" style="max-width:380px;">
+    <button class="tk-close" id="pwaHelpClose"><i class="fas fa-times"></i></button>
+    <div class="tk-icon"><i class="fas fa-mobile-screen-button"></i></div>
+    <h2 class="tk-title">Instala la app</h2>
+    <p class="tk-sub">Sigue estos pasos en tu navegador:</p>
+    <div class="tk-body" style="text-align:left;">
+      <p style="color:#fff;font-size:.86rem;line-height:1.9;">
+        1. Toca los <strong>3 puntos</strong> (⋮) arriba a la derecha<br>
+        2. Busca <strong>"Instalar aplicación"</strong> o <strong>"Agregar a pantalla de inicio"</strong><br>
+        3. Confirma y busca el ícono en tu pantalla principal
+      </p>
+    </div>
+    <p class="tk-note">En iPhone: botón Compartir → "Agregar a pantalla de inicio".</p>
+  </div>
+</div>
+ 
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="brand">
+    <div class="brand-ico"><i class="fas fa-route"></i></div>
+    TRANSPORTES <em>LR</em>
+  </a>
+  <div class="nav-links">
+    <a href="#flota" class="nav-link">Flota</a>
+    <a href="#destinos" class="nav-link">Destinos</a>
+    <a href="#cotizar" class="nav-link">Cotizar</a>
+  </div>
+  <a href="#cotizar" class="nav-cta">Reservar ahora</a>
+  <button class="hbg" id="hbg" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+ 
+<!-- DRAWER -->
+<div class="drawer" id="drawer">
+  <button style="position:absolute;top:20px;right:20px;background:none;border:none;color:rgba(255,255,255,.5);font-size:1.4rem;cursor:pointer;" id="dclose"><i class="fas fa-times"></i></button>
+  <a href="#flota" class="dl">Flota</a>
+  <a href="#destinos" class="dl">Destinos</a>
+  <a href="#cotizar" class="dl">Cotizar</a>
+  <a href="https://wa.me/523343194831" class="dl d-cta btn-gold" target="_blank" data-wa="drawer" style="font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;padding:14px 36px;border-radius:100px;"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+</div>
+ 
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-inner">
+    <div id="hero-left">
+      <div class="eyebrow" id="hero-eyebrow">
+        <span class="pulse-dot"></span>
+        <span data-edit="eyebrow">Clase ejecutiva · Jalisco</span>
+      </div>
+      <h1 class="hero-title" id="hero-title">
+        <span class="line-wrap"><span class="line" data-edit="heroTitle1">Viaja con</span></span>
+        <span class="line-wrap"><em class="line" data-edit="heroTitle2">confort real</em></span>
+        <span class="line-wrap"><span class="line" data-edit="heroTitle3">a otro nivel.</span></span>
+      </h1>
+      <p class="hero-sub" id="hero-sub" data-edit="heroSub">Puntualidad impecable, flota premium y rutas en todo México. Traslados que hacen la diferencia desde Guadalajara.</p>
+      <div class="hero-btns" id="hero-btns">
+        <a href="#cotizar" class="btn-gold"><i class="fab fa-whatsapp"></i> Cotizar por WhatsApp</a>
+        <a href="#flota" class="btn-ghost">Ver flota <i class="fas fa-arrow-right"></i></a>
+      </div>
+    </div>
+    <div class="hero-visual" id="hero-visual">
+      <div class="globe-stage">
+        <div class="globe-glow"></div>
+        <div id="globe-wrap"></div>
+        <div class="map-tip" id="map-tip"></div>
+        <div class="map-hint"><i class="fas fa-hand-pointer"></i> Toca un destino en el mapa</div>
+        <div class="g-badge g-badge-tl"><i class="fas fa-map-location-dot"></i><div><strong>Jalisco · México</strong><span>mapa interactivo</span></div></div>
+        <div class="g-badge g-badge-br"><i class="fas fa-location-dot"></i><div><strong>6 destinos</strong><span>toca y descubre</span></div></div>
+        <div class="g-fallback" id="globe-fallback">
+          <img src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=900" alt="Transporte premium" data-img="heroImage" id="imgHero">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-hint" id="scroll-hint">
+    <div class="scroll-mouse"><div class="scroll-dot"></div></div>
+    <span>Desplazar</span>
+  </div>
+</section>
+ 
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-inner">
+    <div class="stat"><span class="stat-num" data-n="500" data-s="+">0</span><div class="stat-lbl">Viajes realizados</div></div>
+    <div class="stat"><span class="stat-num" data-n="6">0</span><div class="stat-lbl">Destinos turísticos</div></div>
+    <div class="stat"><span class="stat-num" data-n="2">0</span><div class="stat-lbl">Unidades de lujo</div></div>
+    <div class="stat"><span class="stat-num" data-n="100" data-s="%">0</span><div class="stat-lbl">Clientes satisfechos</div></div>
+  </div>
+</div>
+ 
+<!-- FLOTA -->
+<section id="flota">
+  <div class="s-inner">
+    <div class="fleet-head">
+      <div class="g-left">
+        <div class="s-label" data-edit="fleetLabel">Nuestra flota</div>
+        <h2 class="s-h" data-edit="fleetH">Unidades de confort absoluto</h2>
+        <p class="s-sub" data-edit="fleetSub">Tecnología y comodidad en cada kilómetro.</p>
+      </div>
+      <a href="#cotizar" class="btn-gold g-right" style="white-space:nowrap;flex-shrink:0;">Ver disponibilidad</a>
+    </div>
+    <div class="fleet-grid">
+      <div class="fleet-card g-scale">
+        <div class="fc-img">
+          <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&q=80&w=700" alt="Nissan Urvan" data-img="fleetUrvan">
+          <div class="fc-num">15</div>
+        </div>
+        <div class="fc-body">
+          <span class="fc-tag std" data-edit="fleet1Tag">Capacidad estándar</span>
+          <h3 class="fc-card-h" data-edit="fleet1Title">Nissan Urvan</h3>
+          <div class="specs">
+            <span class="spec"><i class="fas fa-users"></i> 15 pasajeros</span>
+            <span class="spec"><i class="fas fa-snowflake"></i> Aire acondicionado</span>
+            <span class="spec"><i class="fas fa-wifi"></i> WiFi a bordo</span>
+          </div>
+          <p data-edit="fleet1Desc">Ideal para grupos familiares, traslados corporativos y eventos locales. Amplio espacio interior con climatización integral.</p>
+          <button class="fc-cta" onclick="document.getElementById('cotizar').scrollIntoView({behavior:'smooth'})">Cotizar esta unidad <i class="fas fa-arrow-right"></i></button>
+        </div>
+      </div>
+      <div class="fleet-card g-scale">
+        <div class="fc-img">
+          <img src="https://images.unsplash.com/photo-1620714223084-8fcacc6dfd8d?auto=format&fit=crop&q=80&w=700" alt="Mercedes Sprinter" data-img="fleetSprinter">
+          <div class="fc-num">20</div>
+        </div>
+        <div class="fc-body">
+          <span class="fc-tag prem" data-edit="fleet2Tag">★ Nivel ejecutivo</span>
+          <h3 class="fc-card-h" data-edit="fleet2Title">Mercedes-Benz Sprinter</h3>
+          <div class="specs">
+            <span class="spec"><i class="fas fa-users"></i> 20 pasajeros</span>
+            <span class="spec"><i class="fas fa-tv"></i> Pantallas HD</span>
+            <span class="spec"><i class="fas fa-couch"></i> Asientos premium</span>
+            <span class="spec"><i class="fas fa-usb"></i> USB por asiento</span>
+          </div>
+          <p data-edit="fleet2Desc">El estándar de oro para largas distancias. Doble zona climática, maletero amplio y sistema multimedia de vanguardia.</p>
+          <button class="fc-cta" onclick="document.getElementById('cotizar').scrollIntoView({behavior:'smooth'})">Cotizar esta unidad <i class="fas fa-arrow-right"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+ 
+<!-- DESTINOS -->
+<section id="destinos">
+  <div class="s-inner">
+    <div class="dest-head">
+      <div class="g-left">
+        <div class="s-label" data-edit="destLabel">Destinos</div>
+        <h2 class="s-h" data-edit="destH">Rutas culturales y paradisíacas</h2>
+      </div>
+      <p class="s-sub g-right" data-edit="destSub">Toca cualquier tarjeta para descubrir el itinerario, la leyenda, el mapa y la galería de cada destino.</p>
+    </div>
+    <div class="dest-grid">
+      <div class="dc big g-scale" onclick="openM('mazamitla')">
+        <img src="https://www.adondeviajar.es/wp-content/uploads/2022/06/Visita-el-pueblo-magico-de-Mazamitla.jpg" alt="Mazamitla" data-img="destMazamitla"
+          onerror="this.onerror=null;this.src='https://cdn.pixabay.com/photo/2016/11/29/05/08/architecture-1867748_1280.jpg'">
+        <div class="dc-ov"></div><div class="dc-line"></div>
+        <span class="dc-badge"><i class="fas fa-images"></i> Galería</span>
+        <div class="dc-content"><span class="dc-tag">Sierra mística · Pueblo Mágico</span><h3>Mazamitla, Jal.</h3></div>
+      </div>
+      <div class="dc g-scale" onclick="openM('tapalpa')">
+        <img src="https://panoramex.com/wp-content/uploads/2024/07/Tapalpa_town_things_to_do_Jalisco.jpg" alt="Tapalpa" data-img="destTapalpa"
+          onerror="this.onerror=null;this.src='https://cdn.pixabay.com/photo/2018/01/12/10/19/fantasy-3078549_1280.jpg'">
+        <div class="dc-ov"></div><div class="dc-line"></div>
+        <span class="dc-badge"><i class="fas fa-images"></i> Galería</span>
+        <div class="dc-content"><span class="dc-tag">Valle megalítico</span><h3>Tapalpa, Jal.</h3></div>
+      </div>
+      <div class="dc g-scale" onclick="openM('sanjuan')">
+        <img src="https://thf.bing.com/th/id/R.4b518f2c15afecf947f3a383bca3f04d?rik=Ul0uHdGkNqB2SA&riu=http%3a%2f%2f2.bp.blogspot.com%2f-e96rx1xIU6U%2fVYsruXq2OEI%2fAAAAAAAABH4%2fkdUBK7yAgVw%2fs1600%2fBASILICA%252BDE%252BSAN%252BJUAN%252BDE%252BLOS%252BLAGOS.jpg&ehk=UYmBRj4%2fzW3qafA30K36iILEvQ6SwcnFm8psqVyXIJ0%3d&risl=&pid=ImgRaw&r=0" alt="San Juan de los Lagos" data-img="destSanjuan"
+          onerror="this.onerror=null;this.src='https://cdn.pixabay.com/photo/2017/08/06/12/52/woman-2592012_1280.jpg'">
+        <div class="dc-ov"></div><div class="dc-line"></div>
+        <span class="dc-badge"><i class="fas fa-images"></i> Galería</span>
+        <div class="dc-content"><span class="dc-tag">Turismo religioso</span><h3>San Juan de los Lagos</h3></div>
+      </div>
+      <div class="dc g-scale" onclick="openM('guayabitos')">
+        <img src="https://i.pinimg.com/originals/0e/8f/af/0e8fafb270240620de94106104d4f64a.jpg" alt="Rincón de Guayabitos" data-img="destGuayabitos">
+        <div class="dc-ov"></div><div class="dc-line"></div>
+        <span class="dc-badge"><i class="fas fa-images"></i> Galería</span>
+        <div class="dc-content"><span class="dc-tag">Alberca natural</span><h3>Rincón de Guayabitos</h3></div>
+      </div>
+      <div class="dc g-scale" onclick="openM('tequila')">
+        <img src="https://vivetequilajalisco.com/wp-content/uploads/2018/10/Tequila-1900x1080.jpg" alt="Tequila" data-img="destTequila"
+          onerror="this.onerror=null;this.src='https://cdn.pixabay.com/photo/2019/05/07/20/29/agave-4186237_1280.jpg'">
+        <div class="dc-ov"></div><div class="dc-line"></div>
+        <span class="dc-badge"><i class="fas fa-images"></i> Galería</span>
+        <div class="dc-content"><span class="dc-tag">Paisaje agavero UNESCO</span><h3>Ruta del Tequila</h3></div>
+      </div>
+      <div class="dc g-scale" onclick="openM('guadalajara')">
+        <img src="https://ik.imagekit.io/f8xal2viyc0/cities/a-close-up-of-a-yellow-building-description-autom.jpeg_Y0Q7jdbG4.webp" alt="Guadalajara" data-img="destGuadalajara"
+          onerror="this.onerror=null;this.src='https://cdn.pixabay.com/photo/2020/02/08/11/12/guadalajara-4829473_1280.jpg'">
+        <div class="dc-ov"></div><div class="dc-line"></div>
+        <span class="dc-badge"><i class="fas fa-images"></i> Galería</span>
+        <div class="dc-content"><span class="dc-tag">Perla tapatía</span><h3>Local Guadalajara</h3></div>
+      </div>
+    </div>
+  </div>
+</section>
+ 
+<!-- TESTIMONIAL -->
+<div class="testi">
+  <div class="testi-deco">"</div>
+  <div class="testi-inner g-fade">
+    <div class="testi-stars">
+      <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+      <i class="fas fa-star"></i><i class="fas fa-star"></i>
+    </div>
+    <p class="testi-q" data-edit="testiQuote">"Contratamos el Sprinter para un viaje de empresa a Tequila. Todo impecable: puntualidad total, comodidad de primer nivel y el chofer increíblemente amable. Lo recomendaremos siempre."</p>
+    <p class="testi-auth">—<span data-edit="testiAuthor">Mariana G., Viaje corporativo · Guadalajara</span></p>
+  </div>
+</div>
+ 
+<!-- COTIZAR -->
+<section id="cotizar">
+  <div class="cot-grid">
+    <div class="cot-left g-left">
+      <div class="s-label" style="color:var(--gold)" data-edit="cotLabel">Cotización</div>
+      <h2 class="s-h"><span data-edit="cotH1">Solicita tu cotización</span><br><span data-edit="cotH2">en 1 minuto</span></h2>
+      <p class="s-sub" data-edit="cotSub">Un asesor te responderá al instante por WhatsApp. Sin compromisos, sin costos ocultos.</p>
+      <div class="perks">
+        <div class="perk">
+          <div class="perk-ico"><i class="fas fa-bolt"></i></div>
+          <div class="perk-txt"><strong data-edit="perk1Title">Respuesta inmediata</strong><span data-edit="perk1Desc">Te contactamos en menos de 10 minutos</span></div>
+        </div>
+        <div class="perk">
+          <div class="perk-ico"><i class="fas fa-tags"></i></div>
+          <div class="perk-txt"><strong data-edit="perk2Title">Precios transparentes</strong><span data-edit="perk2Desc">Sin costos ocultos ni sorpresas al final</span></div>
+        </div>
+        <div class="perk">
+          <div class="perk-ico"><i class="fas fa-shield-alt"></i></div>
+          <div class="perk-txt"><strong data-edit="perk3Title">Viaje seguro garantizado</strong><span data-edit="perk3Desc">Unidades con seguro y operadores certificados</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="g-right">
+      <div class="form-card">
+        <form id="fCot">
+          <div class="fg">
+            <label>Nombre completo</label>
+            <input type="text" id="fnombre" name="cliente" placeholder="Ej. Juan Pérez" required>
+          </div>
+          <div class="fg">
+            <label>Punto de salida (origen)</label>
+            <div class="gps-row">
+              <input type="text" id="fsalida" name="origen" placeholder="Ej. Av. Vallarta 1234, Guadalajara" required>
+              <button type="button" class="btn-gps" id="gpsBtn"><i class="fas fa-location-crosshairs"></i> GPS</button>
+            </div>
+            <div class="gps-note" id="gpsNote"><i class="fas fa-circle-info"></i> Toca <strong>GPS</strong> para compartir tu ubicación exacta de recolección. Llegará a WhatsApp con un enlace al mapa.</div>
+          </div>
+          <div class="fg-row">
+            <div class="fg">
+              <label>Destino (llegada)</label>
+              <select id="fdestino" name="destino" required>
+                <option disabled selected value="">Seleccionar...</option>
+                <option>Mazamitla</option>
+                <option>Tapalpa</option>
+                <option>San Juan de los Lagos</option>
+                <option>Rincón de Guayabitos</option>
+                <option>Tequila / Cantaritos El Güero</option>
+                <option>Local Guadalajara</option>
+                <option value="Otro destino">Otro destino (escribir)</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label>Vehículo</label>
+              <select id="funidad" name="vehiculo" required>
+                <option disabled selected value="">Seleccionar...</option>
+                <option value="Nissan Urvan (15 pasajeros)">Urvan — 15 pax</option>
+                <option value="Mercedes-Benz Sprinter (20 pasajeros)">Sprinter — 20 pax</option>
+              </select>
+            </div>
+          </div>
+          <div class="fg" id="fgOtroDestino" style="display:none;">
+            <label>¿Qué lugar te gustaría conocer?</label>
+            <input type="text" id="fotrodestino" name="destino_otro" placeholder="Ej. Sayulita, Pátzcuaro, San Miguel de Allende, Guanajuato...">
+          </div>
+          <div class="fg-row">
+            <div class="fg">
+              <label>Fecha de salida</label>
+              <input type="date" id="ffecha" name="fecha" required>
+            </div>
+            <div class="fg">
+              <label>Hora de salida</label>
+              <input type="time" id="fhora" name="hora" required>
+            </div>
+          </div>
+          <div class="fg-row">
+            <div class="fg">
+              <label>Fecha de regreso / llegada</label>
+              <input type="date" id="fregreso" name="regreso">
+            </div>
+            <div class="fg">
+              <label>Hora de regreso</label>
+              <input type="time" id="fhoraregreso" name="hora_regreso">
+            </div>
+          </div>
+          <div class="fg-row">
+            <div class="fg">
+              <label>N° de pasajeros</label>
+              <input type="number" id="fpax" name="pasajeros" placeholder="Ej. 12" min="1" required>
+            </div>
+            <div class="fg">
+              <label>Días de servicio</label>
+              <input type="number" id="fdias" name="dias" placeholder="Ej. 3" min="1" required>
+            </div>
+          </div>
+          <input type="hidden" id="lat" name="lat"><input type="hidden" id="lng" name="lng">
+          <button type="submit" class="btn-submit"><i class="fab fa-whatsapp"></i> Generar ticket y enviar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+ 
+<!-- FOOTER -->
+<footer>
+  <div class="ft-inner">
+    <div class="ft-brand">TRANSPORTES <span>LR</span></div>
+    <div class="ft-links">
+      <a href="#flota">Flota</a>
+      <a href="#destinos">Destinos</a>
+      <a href="#cotizar">Cotizar</a>
+      <a href="https://wa.me/523343194831" target="_blank" data-wa="footer">WhatsApp</a>
+    </div>
+    <p class="ft-copy" data-edit="footerCopy">© 2026 Transportes LR · Logística de transporte turístico ejecutivo · Guadalajara, Jalisco</p>
+  </div>
+</footer>
+
+<!-- ════════ PANEL ADMIN (edición cliente) ════════ -->
+<button id="adm-fab" title="Editar página"><i class="fas fa-pen"></i> Editar</button>
+
+<div id="adm-gate">
+  <div class="adm-gate-box">
+    <i class="fas fa-lock"></i>
+    <h3>Acceso restringido</h3>
+    <p>Ingresa la contraseña para editar la página.</p>
+    <input type="password" id="adm-pass" placeholder="Contraseña">
+    <button id="adm-pass-btn">Entrar</button>
+    <div class="adm-gate-err" id="adm-gate-err">Contraseña incorrecta.</div>
+  </div>
+</div>
+
+<div id="adm-panel">
+  <div class="adm-box">
+    <div class="adm-head">
+      <h2>Panel de <span>edición</span></h2>
+      <button class="adm-close" id="adm-close"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="adm-sec">
+      <h4><i class="fas fa-palette"></i> Colores</h4>
+      <div class="adm-color-row"><label>Dorado principal</label><input type="color" id="c-gold" value="#C9922B"></div>
+      <div class="adm-color-row"><label>Dorado claro</label><input type="color" id="c-goldl" value="#E8B455"></div>
+      <div class="adm-color-row"><label>Dorado suave</label><input type="color" id="c-goldxl" value="#F5CC7A"></div>
+      <div class="adm-color-row"><label>Cyan / acento</label><input type="color" id="c-cyan" value="#00C4AA"></div>
+      <div class="adm-color-row"><label>Fondo oscuro</label><input type="color" id="c-ink" value="#0A0C10"></div>
+      <div class="adm-color-row"><label>Fondo claro</label><input type="color" id="c-off" value="#F5F4EF"></div>
+    </div>
+
+    <div class="adm-sec">
+      <h4><i class="fas fa-heading"></i> Textos de toda la página</h4>
+      <div id="text-fields"></div>
+    </div>
+
+    <div class="adm-sec">
+      <h4><i class="fas fa-image"></i> Fotos</h4>
+      <div id="photo-fields"></div>
+      <p style="color:rgba(255,255,255,.35);font-size:.7rem;line-height:1.5;margin-top:4px;">Toca "Elegir archivo" en cualquier foto para subir una nueva desde tu computadora o celular. Se comprime automáticamente para que la página cargue rápido.</p>
+    </div>
+
+    <div class="adm-sec">
+      <h4><i class="fab fa-whatsapp"></i> Contacto</h4>
+      <div class="adm-row"><label>Número de WhatsApp (con código de país, sin +)</label><input type="tel" id="ct-wa" placeholder="523343194831"></div>
+    </div>
+
+    <div class="adm-actions">
+      <div class="adm-status" id="adm-status"></div>
+      <button class="adm-btn-save" id="adm-save"><i class="fas fa-cloud-arrow-up"></i> Guardar cambios</button>
+      <button class="adm-btn-reset" id="adm-reset">Restaurar valores originales</button>
+    </div>
+  </div>
+</div>
+ 
+<!-- ════════ MODALES ════════ -->
+<!-- Mazamitla -->
+<div class="moverlay" id="m-mazamitla" onclick="closeM(event)">
+  <div class="mbox">
+    <button class="mclose" onclick="closeById('m-mazamitla')"><i class="fas fa-times"></i></button>
+    <div class="mgallery" id="g-mazamitla">
+      <img src="https://www.sinpostal.com/wp-content/uploads/Mazamitla-SinPostal-13.jpg" class="on" alt="Mazamitla pueblo" onerror="removeGalleryImg(this)">
+      <img src="https://escapadas.mexicodesconocido.com.mx/wp-content/uploads/2020/10/Jalisco_Mazamitla_Calles_BIC-ok.jpg" alt="Mazamitla calles" onerror="removeGalleryImg(this)">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Mazamitla_Jalisco_Parroquia_San_Cristobal.jpg/1280px-Mazamitla_Jalisco_Parroquia_San_Cristobal.jpg" alt="Parroquia San Cristóbal" onerror="removeGalleryImg(this)">
+      <img src="https://i.pinimg.com/736x/58/c9/f5/58c9f5f40740e90df155d6b77b872328.jpg" alt="Mazamitla cabaña" onerror="removeGalleryImg(this)">
+      <img src="https://thf.bing.com/th/id/R.a922ed3db8fed03afa2b3909a061a006?rik=rcba7bym%2fZeqkA&pid=ImgRaw&r=0" alt="Mazamitla sierra" onerror="removeGalleryImg(this)">
+      <div class="gnav" id="dots-mazamitla"></div>
+      <button class="garr prev" onclick="ga('mazamitla',-1,event)"><i class="fas fa-chevron-left"></i></button>
+      <button class="garr next" onclick="ga('mazamitla',1,event)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="mbody">
+      <span class="m-tag">Sierra mística · Pueblo Mágico</span>
+      <h2>Los Guardianes del Bosque</h2>
+      <p class="mdesc">Mazamitla, de origen náhuatl: "Lugar donde se hacen flechas para cazar venados". Enclavado en la Sierra del Tigre a solo 2 horas de Guadalajara, deslumbra con sus calles empedradas, tejados rojos, cascadas y bosques de pino y encino.</p>
+      <div class="mitin">
+        <div class="mitin-head"><i class="fas fa-route"></i> Itinerario del tour</div>
+        <ul class="mitin-list">
+          <li class="mitin-item"><span class="mitin-num">1</span><div class="mitin-txt"><strong>Centro histórico y Parroquia de San Cristóbal</strong><span>Calles empedradas, portales y la plaza principal para tus fotos del recuerdo.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">2</span><div class="mitin-txt"><strong>Cascada El Salto del Nogal</strong><span>Caminata entre bosque de pino y encino hasta el mirador de la cascada.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">3</span><div class="mitin-txt"><strong>Zona de cabañas Los Cazos</strong><span>Paseo por el corazón serrano de Mazamitla y sus paisajes de montaña.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">4</span><div class="mitin-txt"><strong>Tiempo libre y gastronomía</strong><span>Para disfrutar borrego al pastor, café de olla, rompope y artesanías locales.</span></div></li>
+        </ul>
+        <div class="mincl">
+          <span class="mincl-chip"><i class="fas fa-snowflake"></i> Aire acondicionado</span>
+          <span class="mincl-chip"><i class="fas fa-camera"></i> Paradas fotográficas</span>
+          <span class="mincl-chip"><i class="fas fa-user-tie"></i> Operador certificado</span>
+        </div>
+      </div>
+      <div class="mmap-h"><i class="fas fa-map-location-dot"></i> Ubicación · 2 hrs desde Guadalajara</div>
+      <div class="mmap"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=Mazamitla,Jalisco,Mexico&z=13&output=embed"></iframe></div>
+      <a class="mmap-link" href="https://www.google.com/maps/dir/?api=1&destination=Mazamitla,Jalisco" target="_blank"><i class="fas fa-diamond-turn-right"></i> Cómo llegar</a>
+      <div class="mlegend-h"><i class="fas fa-book-open"></i> La leyenda del lugar</div>
+      <div class="mlegend">"Cuenta la tradición oral que en las noches más frías, cuando la neblina cubre la Parroquia de San Cristóbal, se escuchan sutiles silbidos ancestrales en la sierra. Los antiguos pobladores afirmaban que son los espíritus de los guerreros prehispánicos, guardianes de la magia y los imponentes pinos del pueblo."</div>
+    </div>
+  </div>
+</div>
+ 
+<!-- Tapalpa -->
+<div class="moverlay" id="m-tapalpa" onclick="closeM(event)">
+  <div class="mbox">
+    <button class="mclose" onclick="closeById('m-tapalpa')"><i class="fas fa-times"></i></button>
+    <div class="mgallery" id="g-tapalpa">
+      <img src="https://hoteleseconomicosmexico.com/fotos/jalisco/tapalpa/tapalpa-3.jpg" class="on" alt="Tapalpa pueblo" onerror="removeGalleryImg(this)">
+      <img src="https://mediaim.expedia.com/destination/2/be4f798f04cade3506f4e8cbfbfa41a4.jpg" alt="Tapalpa paisaje" onerror="removeGalleryImg(this)">
+      <img src="https://s3-us-west-1.amazonaws.com/tipsparatuviaje/wp-content/uploads/2017/01/CLIMA-EN-TAPALPA.jpg" alt="Tapalpa clima" onerror="removeGalleryImg(this)">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Tapalpa_Jalisco.jpg/1280px-Tapalpa_Jalisco.jpg" alt="Tapalpa Jalisco" onerror="removeGalleryImg(this)">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Piedrotas_de_Tapalpa.jpg/1280px-Piedrotas_de_Tapalpa.jpg" alt="Las Piedrotas" onerror="removeGalleryImg(this)">
+      <div class="gnav" id="dots-tapalpa"></div>
+      <button class="garr prev" onclick="ga('tapalpa',-1,event)"><i class="fas fa-chevron-left"></i></button>
+      <button class="garr next" onclick="ga('tapalpa',1,event)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="mbody">
+      <span class="m-tag">Valle megalítico · Pueblo Mágico</span>
+      <h2>El Enigma de Las Piedrotas</h2>
+      <p class="mdesc">Tapalpa: "Lugar de Tierra de Color". Famoso por sus casas blancas con tejados rojos y las misteriosas formaciones megalíticas del Valle de Enmedio. Un paisaje único que combina naturaleza, historia y misterio a 2 horas de Guadalajara.</p>
+      <div class="mitin">
+        <div class="mitin-head"><i class="fas fa-route"></i> Itinerario del tour</div>
+        <ul class="mitin-list">
+          <li class="mitin-item"><span class="mitin-num">1</span><div class="mitin-txt"><strong>Centro y Parroquia de San Antonio</strong><span>Casas blancas, tejados rojos y el ambiente único del Pueblo Mágico.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">2</span><div class="mitin-txt"><strong>Las Piedrotas — Valle de Enmedio</strong><span>Las enigmáticas formaciones megalíticas, ideales para fotos y caminata.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">3</span><div class="mitin-txt"><strong>Salto del Nogal (opcional)</strong><span>La cascada más alta de Jalisco, con más de 100 metros de caída.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">4</span><div class="mitin-txt"><strong>Tiempo libre y antojitos</strong><span>Borrego, rompope tapalpense y artesanías en madera del pueblo.</span></div></li>
+        </ul>
+        <div class="mincl">
+          <span class="mincl-chip"><i class="fas fa-snowflake"></i> Aire acondicionado</span>
+          <span class="mincl-chip"><i class="fas fa-camera"></i> Paradas fotográficas</span>
+          <span class="mincl-chip"><i class="fas fa-user-tie"></i> Operador certificado</span>
+        </div>
+      </div>
+      <div class="mmap-h"><i class="fas fa-map-location-dot"></i> Ubicación · 2 hrs desde Guadalajara</div>
+      <div class="mmap"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=Tapalpa,Jalisco,Mexico&z=13&output=embed"></iframe></div>
+      <a class="mmap-link" href="https://www.google.com/maps/dir/?api=1&destination=Tapalpa,Jalisco" target="_blank"><i class="fas fa-diamond-turn-right"></i> Cómo llegar</a>
+      <div class="mlegend-h"><i class="fas fa-book-open"></i> La leyenda del lugar</div>
+      <div class="mlegend">"Los relatos más antiguos aseguran que el Valle de Enmedio era un centro ceremonial sagrado. Se dice que las rocas poseen una carga energética protectora y que, al atardecer, sus alineaciones reproducen constelaciones diseñadas para canalizar la abundancia hacia toda la región."</div>
+    </div>
+  </div>
+</div>
+ 
+<!-- San Juan -->
+<div class="moverlay" id="m-sanjuan" onclick="closeM(event)">
+  <div class="mbox">
+    <button class="mclose" onclick="closeById('m-sanjuan')"><i class="fas fa-times"></i></button>
+    <div class="mgallery" id="g-sanjuan">
+      <img src="https://tipsparatuviaje.com/wp-content/uploads/2019/03/peregrinar-a-la-catedral-de-nuestra-senora-de-san-juan-de-los-lagos.jpg" class="on" alt="Catedral San Juan" onerror="removeGalleryImg(this)">
+      <img src="https://thf.bing.com/th/id/R.783312d006190ce78cfa9ed75407baaf?rik=JDEWRK8d6Rudfw&pid=ImgRaw&r=0" alt="San Juan de los Lagos" onerror="removeGalleryImg(this)">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/San_Juan_de_los_Lagos_-_Centro.jpg/1280px-San_Juan_de_los_Lagos_-_Centro.jpg" alt="Centro San Juan" onerror="removeGalleryImg(this)">
+      <img src="https://s-media-cache-ak0.pinimg.com/736x/32/fd/45/32fd45136689a9a6bb4567e5870eb7eb.jpg" alt="San Juan basílica" onerror="removeGalleryImg(this)">
+      <img src="https://descubreenmexico.com/wp-content/uploads/2023/07/San-Juan-de-los-Lagos-de-noche.jpg" alt="San Juan de noche" onerror="removeGalleryImg(this)">
+      <div class="gnav" id="dots-sanjuan"></div>
+      <button class="garr prev" onclick="ga('sanjuan',-1,event)"><i class="fas fa-chevron-left"></i></button>
+      <button class="garr next" onclick="ga('sanjuan',1,event)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="mbody">
+      <span class="m-tag">Turismo religioso · 2do santuario nacional</span>
+      <h2>El Primer Milagro (1623)</h2>
+      <p class="mdesc">Segundo centro de peregrinación católica más importante de México. Su imponente Basílica Catedral atrae a millones de fieles cada año que llegan a venerar a la Virgen de San Juan de los Lagos, imagen de origen indígena del siglo XVI.</p>
+      <div class="mitin">
+        <div class="mitin-head"><i class="fas fa-route"></i> Itinerario del tour</div>
+        <ul class="mitin-list">
+          <li class="mitin-item"><span class="mitin-num">1</span><div class="mitin-txt"><strong>Basílica de Nuestra Señora de San Juan</strong><span>Visita al segundo santuario más importante de México y su imponente catedral.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">2</span><div class="mitin-txt"><strong>Centro y andador principal</strong><span>Mercado de dulces típicos, nieves y artículos religiosos de la región.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">3</span><div class="mitin-txt"><strong>Tiempo de devoción y recorrido</strong><span>Espacio para la peregrinación, la oración y conocer el santuario con calma.</span></div></li>
+        </ul>
+        <div class="mincl">
+          <span class="mincl-chip"><i class="fas fa-church"></i> Turismo religioso</span>
+          <span class="mincl-chip"><i class="fas fa-users"></i> Ideal grupos y peregrinaciones</span>
+          <span class="mincl-chip"><i class="fas fa-user-tie"></i> Operador certificado</span>
+        </div>
+      </div>
+      <div class="mmap-h"><i class="fas fa-map-location-dot"></i> Ubicación · 1h 45min desde Guadalajara</div>
+      <div class="mmap"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=San%20Juan%20de%20los%20Lagos,Jalisco&z=14&output=embed"></iframe></div>
+      <a class="mmap-link" href="https://www.google.com/maps/dir/?api=1&destination=San+Juan+de+los+Lagos,Jalisco" target="_blank"><i class="fas fa-diamond-turn-right"></i> Cómo llegar</a>
+      <div class="mlegend-h"><i class="fas fa-book-open"></i> La leyenda del lugar</div>
+      <div class="mlegend">"En 1623, durante los ensayos de una familia de cirqueros, una niña falleció al caer sobre dagas afiladas. Una anciana indígena llamada Ana Lucía colocó la imagen de la Virgen sobre su pecho. Ante el asombro de todos los testigos, la pequeña se levantó completamente sana, dando inicio a la inmensa fe que mueve a millones."</div>
+    </div>
+  </div>
+</div>
+ 
+<!-- Guayabitos -->
+<div class="moverlay" id="m-guayabitos" onclick="closeM(event)">
+  <div class="mbox">
+    <button class="mclose" onclick="closeById('m-guayabitos')"><i class="fas fa-times"></i></button>
+    <div class="mgallery" id="g-guayabitos">
+      <img src="https://savoteur.com/wp-content/uploads/2023/08/rincon-de-guayabitos-mexico.jpg" class="on" alt="Rincón de Guayabitos" onerror="removeGalleryImg(this)">
+      <img src="https://i.pinimg.com/736x/0e/8f/af/0e8fafb270240620de94106104d4f64a.jpg" alt="Guayabitos playa" onerror="removeGalleryImg(this)">
+      <img src="https://blob.tusbuenasnoticias.com/images/2024/04/23/como-llegar-a-guayabitos-desde-culiacan.png" alt="Guayabitos panorámica" onerror="removeGalleryImg(this)">
+      <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=1200" alt="Playa Pacífico" onerror="removeGalleryImg(this)">
+      <img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&q=80&w=1200" alt="Mar turquesa" onerror="removeGalleryImg(this)">
+      <div class="gnav" id="dots-guayabitos"></div>
+      <button class="garr prev" onclick="ga('guayabitos',-1,event)"><i class="fas fa-chevron-left"></i></button>
+      <button class="garr next" onclick="ga('guayabitos',1,event)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="mbody">
+      <span class="m-tag">Alberca natural · Costa Nayarita</span>
+      <h2>El Refugio Oculto de los Piratas</h2>
+      <p class="mdesc">Rincón de Guayabitos, en la Riviera Nayarit, destaca por su mar de oleaje suave ideal para familias. Sus aguas cálidas, rodeadas de islas tropicales y vegetación exuberante, crean uno de los paisajes playeros más hermosos del Pacífico mexicano.</p>
+      <div class="mitin">
+        <div class="mitin-head"><i class="fas fa-route"></i> Itinerario del tour</div>
+        <ul class="mitin-list">
+          <li class="mitin-item"><span class="mitin-num">1</span><div class="mitin-txt"><strong>Día completo de playa</strong><span>Mar de oleaje suave en la Riviera Nayarit, ideal para familias y descanso.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">2</span><div class="mitin-txt"><strong>Paseo a Isla del Coral (opcional)</strong><span>Recorrido en lancha hacia la isla y sus aguas para esnórquel.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">3</span><div class="mitin-txt"><strong>Tiempo libre frente al mar</strong><span>Mariscos frescos, palapas y atardeceres del Pacífico mexicano.</span></div></li>
+        </ul>
+        <div class="mincl">
+          <span class="mincl-chip"><i class="fas fa-umbrella-beach"></i> Día de playa</span>
+          <span class="mincl-chip"><i class="fas fa-snowflake"></i> Aire acondicionado</span>
+          <span class="mincl-chip"><i class="fas fa-user-tie"></i> Operador certificado</span>
+        </div>
+      </div>
+      <div class="mmap-h"><i class="fas fa-map-location-dot"></i> Ubicación · 3 hrs desde Guadalajara</div>
+      <div class="mmap"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=Rinc%C3%B3n%20de%20Guayabitos,Nayarit&z=13&output=embed"></iframe></div>
+      <a class="mmap-link" href="https://www.google.com/maps/dir/?api=1&destination=Rinc%C3%B3n+de+Guayabitos,Nayarit" target="_blank"><i class="fas fa-diamond-turn-right"></i> Cómo llegar</a>
+      <div class="mlegend-h"><i class="fas fa-book-open"></i> La leyenda del lugar</div>
+      <div class="mlegend">"Durante los siglos XVI y XVII, la Bahía de Jaltemba era frecuentada por piratas ingleses y holandeses. Se dice que en la misteriosa 'Isla del Cangrejo' aún yacen tesoros enterrados por corsarios que esperaban el momento perfecto para zarpar."</div>
+    </div>
+  </div>
+</div>
+ 
+<!-- Tequila -->
+<div class="moverlay" id="m-tequila" onclick="closeM(event)">
+  <div class="mbox">
+    <button class="mclose" onclick="closeById('m-tequila')"><i class="fas fa-times"></i></button>
+    <div class="mgallery" id="g-tequila">
+      <img src="https://thf.bing.com/th/id/R.9ec5a9fc05cc426cf3181bc43ac3bbcd?rik=Q0lDJG6416LHpQ&riu=http%3a%2f%2factitudmag.com%2fwp-content%2fuploads%2fTour-a-Tequila-Jalisco.webp&ehk=kUbBRogWAHA2l7jacPjFHuCKhtIOgTmoNXts52VigDE%3d&risl=&pid=ImgRaw&r=0" class="on" alt="Tour Tequila" onerror="removeGalleryImg(this)">
+      <img src="https://blob.tusbuenasnoticias.com/images/2025/06/30/tequila-pueblo-magico-7c65b268-focus-0-0-825-464.webp" alt="Tequila Pueblo Mágico" onerror="removeGalleryImg(this)">
+      <img src="https://i.pinimg.com/736x/87/f8/a8/87f8a8d7a70aa9608e68d3f057d30e7a.jpg" alt="Tequila agave" onerror="removeGalleryImg(this)">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Tequila%2C_Jalisco_%28pueblo%29.jpg/1280px-Tequila%2C_Jalisco_%28pueblo%29.jpg" alt="Pueblo Tequila" onerror="removeGalleryImg(this)">
+      <img src="https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=1200" alt="Destilería tequila" onerror="removeGalleryImg(this)">
+      <div class="gnav" id="dots-tequila"></div>
+      <button class="garr prev" onclick="ga('tequila',-1,event)"><i class="fas fa-chevron-left"></i></button>
+      <button class="garr next" onclick="ga('tequila',1,event)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="mbody">
+      <span class="m-tag">Paisaje agavero UNESCO · Pueblo Mágico</span>
+      <h2>El Rayo Divino y el Agave</h2>
+      <p class="mdesc">Tequila: "Lugar en que se corta". Cuna de la emblemática bebida nacional, se caracteriza por sus espectaculares paisajes de agave azul declarados Patrimonio de la Humanidad y por conservar haciendas coloniales productoras de destilados.</p>
+      <div class="mitin">
+        <div class="mitin-head"><i class="fas fa-route"></i> Itinerario del tour</div>
+        <ul class="mitin-list">
+          <li class="mitin-item"><span class="mitin-num">1</span><div class="mitin-txt"><strong>Tequilera artesanal con degustación</strong><span>Visita a una casa 100% artesanal y degustación de tequilas y licores.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">2</span><div class="mitin-txt"><strong>Recorrido por el proceso y la cava</strong><span>Conoce la elaboración del tequila y una de las cavas más grandes de la zona.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">3</span><div class="mitin-txt"><strong>Pueblo Mágico — tiempo libre</strong><span>Andador principal, mural de la diosa del tequila, artesanías y fotos.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">4</span><div class="mitin-txt"><strong>Cierre en Cantaritos El Güero</strong><span>Los famosos cantaritos #1 para coronar la experiencia agavera.</span></div></li>
+        </ul>
+        <div class="mincl">
+          <span class="mincl-chip"><i class="fas fa-wine-bottle"></i> Degustación incluida</span>
+          <span class="mincl-chip"><i class="fas fa-snowflake"></i> Aire acondicionado</span>
+          <span class="mincl-chip"><i class="fas fa-user-tie"></i> Operador certificado</span>
+        </div>
+      </div>
+      <div class="mmap-h"><i class="fas fa-map-location-dot"></i> Ubicación · 1h 15min desde Guadalajara</div>
+      <div class="mmap"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=Cantaritos%20El%20G%C3%BCero%20Tequila%20Jalisco&z=14&output=embed"></iframe></div>
+      <a class="mmap-link" href="https://www.google.com/maps/dir/?api=1&destination=Cantaritos+El+G%C3%BCero+Tequila+Jalisco" target="_blank"><i class="fas fa-diamond-turn-right"></i> Cómo llegar</a>
+      <div class="mlegend-h"><i class="fas fa-book-open"></i> La leyenda del lugar</div>
+      <div class="mlegend">"Dice la leyenda que una tarde tormentosa, un rayo cayó sobre un campo de agaves. Al acercarse, los indígenas percibieron un aroma dulce y descubrieron que del corazón de las plantas brotaba una miel que al fermentarse generaba un líquido relajante. Lo interpretaron como un regalo de los dioses."</div>
+    </div>
+  </div>
+</div>
+ 
+<!-- Guadalajara -->
+<div class="moverlay" id="m-guadalajara" onclick="closeM(event)">
+  <div class="mbox">
+    <button class="mclose" onclick="closeById('m-guadalajara')"><i class="fas fa-times"></i></button>
+    <div class="mgallery" id="g-guadalajara">
+      <img src="https://imagenes.descubro.mx/uploads/2019/12/g4.jpg" class="on" alt="Guadalajara centro" onerror="removeGalleryImg(this)">
+      <img src="https://www.soynomada.news/__export/1700330911346/sites/debate/img/2023/11/18/guadalajaara_mex.png_1758632412.png" alt="Guadalajara ciudad" onerror="removeGalleryImg(this)">
+      <img src="https://media.istockphoto.com/id/1407401808/es/foto/guadalajara-de-noche-jalisco-m%C3%A9xico.jpg?b=1&s=170667a&w=0&k=20&c=xxriSQ3sGmqQohclXCgTs-wHO5WueJSNiM-shfolk24=" alt="Guadalajara de noche" onerror="removeGalleryImg(this)">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Teatro_Degollado_en_Guadalajara.jpg/1280px-Teatro_Degollado_en_Guadalajara.jpg" alt="Teatro Degollado" onerror="removeGalleryImg(this)">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Guadalajara_Cathedral.jpg/1280px-Guadalajara_Cathedral.jpg" alt="Catedral Guadalajara" onerror="removeGalleryImg(this)">
+      <div class="gnav" id="dots-guadalajara"></div>
+      <button class="garr prev" onclick="ga('guadalajara',-1,event)"><i class="fas fa-chevron-left"></i></button>
+      <button class="garr next" onclick="ga('guadalajara',1,event)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="mbody">
+      <span class="m-tag">Perla tapatía · Capital Cultural</span>
+      <h2>El Reloj de la Muerte del Hospicio</h2>
+      <p class="mdesc">Guadalajara, capital de Jalisco, mezcla modernidad e historia colonial. Su centro histórico cuenta con la Catedral Metropolitana, el Teatro Degollado y los murales de José Clemente Orozco en el Hospicio Cabañas, Patrimonio de la Humanidad.</p>
+      <div class="mitin">
+        <div class="mitin-head"><i class="fas fa-route"></i> Itinerario del tour</div>
+        <ul class="mitin-list">
+          <li class="mitin-item"><span class="mitin-num">1</span><div class="mitin-txt"><strong>City tour del centro histórico</strong><span>Catedral Metropolitana, Rotonda de los Jaliscienses Ilustres y Teatro Degollado.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">2</span><div class="mitin-txt"><strong>Hospicio Cabañas</strong><span>Patrimonio de la Humanidad y los célebres murales de José Clemente Orozco.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">3</span><div class="mitin-txt"><strong>Tlaquepaque / Tonalá (opcional)</strong><span>Arte, artesanía y la mejor gastronomía tapatía en sus andadores.</span></div></li>
+          <li class="mitin-item"><span class="mitin-num">4</span><div class="mitin-txt"><strong>Tiempo libre</strong><span>Compras, antojitos y fotos por el corazón de la Perla Tapatía.</span></div></li>
+        </ul>
+        <div class="mincl">
+          <span class="mincl-chip"><i class="fas fa-landmark"></i> City tour cultural</span>
+          <span class="mincl-chip"><i class="fas fa-snowflake"></i> Aire acondicionado</span>
+          <span class="mincl-chip"><i class="fas fa-user-tie"></i> Operador certificado</span>
+        </div>
+      </div>
+      <div class="mmap-h"><i class="fas fa-map-location-dot"></i> Ubicación · Centro de Guadalajara</div>
+      <div class="mmap"><iframe loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=Catedral%20de%20Guadalajara,Jalisco&z=15&output=embed"></iframe></div>
+      <a class="mmap-link" href="https://www.google.com/maps/dir/?api=1&destination=Catedral+de+Guadalajara,Jalisco" target="_blank"><i class="fas fa-diamond-turn-right"></i> Cómo llegar</a>
+      <div class="mlegend-h"><i class="fas fa-book-open"></i> La leyenda del lugar</div>
+      <div class="mlegend">"En los primeros años del Hospicio Cabañas, un reloj en su fachada comenzaba a detenerse de forma inexplicable. Cada vez que se paraba, un niño del hospicio fallecía. Ante el temor generalizado, el reloj fue removido de la estructura en 1952."</div>
+    </div>
+  </div>
+</div>
+ 
+<!-- ════════ TICKET VIP 3D ════════ -->
+<div class="tk-overlay" id="tkOverlay">
+  <canvas class="tk-confetti" id="tkConfetti"></canvas>
+  <div class="ticket" id="tkCard">
+    <button class="tk-close" id="tkClose"><i class="fas fa-times"></i></button>
+    <div class="tk-icon"><i class="fas fa-bolt"></i></div>
+    <h2 class="tk-title">¡Cotización Lista!</h2>
+    <p class="tk-sub">Tu ticket digital VIP de Transportes LR se generó correctamente.</p>
+    <div class="tk-body">
+      <div class="tk-row"><span class="tk-k">👤 Cliente</span><span class="tk-v" id="tkCliente">—</span></div>
+      <div class="tk-row"><span class="tk-k">📍 Destino</span><span class="tk-v" id="tkDestino">—</span></div>
+      <div class="tk-row"><span class="tk-k">🚐 Unidad</span><span class="tk-v" id="tkUnidad">—</span></div>
+      <div class="tk-row"><span class="tk-k">📆 Fecha</span><span class="tk-v" id="tkFecha">—</span></div>
+      <div class="tk-row"><span class="tk-k">👥 Pasajeros</span><span class="tk-v" id="tkPax">—</span></div>
+      <div class="tk-folio">
+        <span>Folio</span><strong id="tkFolio">LR-000000</strong>
+      </div>
+    </div>
+    <a href="#" target="_blank" class="tk-wa" id="tkWa">
+      <svg viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397 0 11.966 0c3.178.001 6.165 1.24 8.413 3.494 2.25 2.253 3.487 5.244 3.484 8.423-.003 6.615-5.34 11.963-11.909 11.963-2.005-.001-3.975-.51-5.728-1.485L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.623-1.023-5.09-2.885-6.956C16.53 1.984 14.062.96 11.445.96c-5.438 0-9.866 4.372-9.87 9.802 0 1.698.459 3.35 1.328 4.866l-.993 3.63 3.733-.964z"/></svg>
+      <span>ENVIAR TICKET A WHATSAPP</span>
+    </a>
+    <p class="tk-note">Al dar clic se abrirá WhatsApp con el mensaje listo para enviar.</p>
+  </div>
+</div>
+ 
+<script>
+gsap.registerPlugin(ScrollTrigger);
+ 
+/* PARTICLES */
+(function(){
+  const cv = document.getElementById('pcv');
+  const cx = cv.getContext('2d');
+  function resize(){ cv.width = innerWidth; cv.height = innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  const pts = Array.from({length:70}, () => ({
+    x: Math.random()*innerWidth, y: Math.random()*innerHeight,
+    r: Math.random()*1.4+.3, sx:(Math.random()-.5)*.28, sy:-(Math.random()*.35+.08),
+    op:Math.random()*.4+.08, life:Math.random()*180, max:Math.random()*180+80
+  }));
+  function reset(p){ p.x=Math.random()*innerWidth; p.y=innerHeight+5; p.life=0; p.max=Math.random()*180+80; }
+  function loop(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    pts.forEach(p=>{
+      p.x+=p.sx; p.y+=p.sy; p.life++;
+      if(p.life>p.max||p.y<-5) reset(p);
+      const t=p.life/p.max;
+      const a=p.op*(t<.2?t/.2:t>.8?(1-t)/.2:1);
+      cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      cx.fillStyle=`rgba(201,146,43,${a})`; cx.fill();
+    });
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+ 
+/* CURSOR */
+(function(){
+  const cur = document.getElementById('cur');
+  const ring = document.getElementById('cur-ring');
+  if(!cur||'ontouchstart' in window) return;
+  let mx=-200,my=-200,rx=-200,ry=-200;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+  (function tick(){
+    cur.style.left=mx+'px'; cur.style.top=my+'px';
+    rx+=(mx-rx)*.11; ry+=(my-ry)*.11;
+    ring.style.left=rx+'px'; ring.style.top=ry+'px';
+    requestAnimationFrame(tick);
+  })();
+  document.querySelectorAll('a,button,.dc,.fleet-card,.perk').forEach(el=>{
+    el.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
+    el.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'));
+  });
+})();
+ 
+/* NAV STUCK */
+const nav = document.getElementById('nav');
+window.addEventListener('scroll',()=>nav.classList.toggle('stuck',scrollY>60),{passive:true});
+ 
+/* HAMBURGER / DRAWER */
+const hbg = document.getElementById('hbg');
+const drawer = document.getElementById('drawer');
+const dclose = document.getElementById('dclose');
+function openDr(){ drawer.classList.add('open');hbg.classList.add('open');document.body.style.overflow='hidden'; }
+function closeDr(){ drawer.classList.remove('open');hbg.classList.remove('open');document.body.style.overflow=''; }
+hbg.addEventListener('click',openDr);
+dclose.addEventListener('click',closeDr);
+document.querySelectorAll('.dl').forEach(a=>a.addEventListener('click',closeDr));
+ 
+/* LOADER → GSAP hero */
+const ld = document.getElementById('loader');
+const ldLine = document.getElementById('ld-line');
+const ldPct = document.getElementById('ld-pct');
+gsap.to(ldLine, {
+  width:'200px', duration:1.6, ease:'power2.inOut',
+  onUpdate: function(){ ldPct.textContent = Math.round((this.progress()||0)*100)+'%'; },
+  onComplete: () => {
+    gsap.to(ld, { opacity:0, duration:.55, ease:'power2.in',
+      onComplete:()=>{ ld.style.display='none'; initAnimations(); } });
+  }
+});
+ 
+function initAnimations(){
+  const tl = gsap.timeline({defaults:{ease:'power3.out'}});
+  tl.to('#hero-eyebrow', {opacity:1, y:0, duration:.7});
+  tl.from('.line', {y:'110%', opacity:0, duration:.85, stagger:.12, ease:'power4.out'}, '-=.3');
+  tl.to('#hero-sub', {opacity:1, duration:.7}, '-=.3');
+  tl.to('#hero-btns', {opacity:1, duration:.6}, '-=.4');
+  tl.to('#hero-visual', {opacity:1, x:0, duration:1, ease:'power3.out'}, '-=.9');
+  tl.to('#scroll-hint', {opacity:1, duration:.6}, '-=.1');
+ 
+  ScrollTrigger.create({
+    trigger: '.stats', start: 'top 85%', once: true,
+    onEnter: () => {
+      document.querySelectorAll('.stat-num').forEach(el=>{
+        const target = +el.dataset.n; const suffix = el.dataset.s||'';
+        gsap.to(el,{opacity:1,y:0,duration:.7,ease:'power2.out'});
+        const obj = {val:0};
+        gsap.to(obj,{ val:target, duration:1.8, ease:'power2.out', delay:.2,
+          onUpdate:()=>{ el.textContent=Math.round(obj.val)+suffix; } });
+      });
+    }
+  });
+ 
+  gsap.utils.toArray('.g-fade').forEach(el=>{
+    gsap.to(el,{opacity:1, y:0, duration:.8, ease:'power3.out',
+      scrollTrigger:{trigger:el,start:'top 85%',once:true}});
+  });
+  gsap.utils.toArray('.g-left').forEach(el=>{
+    gsap.to(el,{opacity:1, x:0, duration:.85, ease:'power3.out',
+      scrollTrigger:{trigger:el,start:'top 85%',once:true}});
+  });
+  gsap.utils.toArray('.g-right').forEach(el=>{
+    gsap.to(el,{opacity:1, x:0, duration:.85, ease:'power3.out',
+      scrollTrigger:{trigger:el,start:'top 85%',once:true}});
+  });
+  gsap.utils.toArray('.fleet-grid').forEach(grid=>{
+    gsap.to(grid.querySelectorAll('.g-scale'),{opacity:1, scale:1, duration:.75, ease:'power3.out',
+      stagger:.15, scrollTrigger:{trigger:grid,start:'top 82%',once:true}});
+  });
+  gsap.utils.toArray('.dest-grid').forEach(grid=>{
+    gsap.to(grid.querySelectorAll('.g-scale'),{opacity:1, scale:1, duration:.65, ease:'power3.out',
+      stagger:.08, scrollTrigger:{trigger:grid,start:'top 82%',once:true}});
+  });
+  gsap.to('.testi-deco',{ x:'-8%', ease:'none',
+    scrollTrigger:{trigger:'.testi',start:'top bottom',end:'bottom top',scrub:1}});
+}
+ 
+/* MODALES */
+const gState = {};
+function removeGalleryImg(img) { img.style.display = 'none'; img.classList.remove('on'); }
+function rebuildDots(id) {
+  const gallery = document.getElementById('g-' + id); if (!gallery) return;
+  const dotsEl = document.getElementById('dots-' + id); if (!dotsEl) return;
+  const visible = Array.from(gallery.querySelectorAll('img')).filter(i => i.style.display !== 'none');
+  visible.forEach((img, i) => img.classList.toggle('on', i === 0));
+  gState[id] = 0;
+  dotsEl.innerHTML = visible.map((_, i) =>
+    `<button class="gdot ${i===0?'on':''}" onclick="gs('${id}',${i},event)"></button>`).join('');
+}
+function openM(id) {
+  const m = document.getElementById('m-' + id); if (!m) return;
+  m.classList.add('active'); document.body.style.overflow = 'hidden';
+  const gallery = document.getElementById('g-' + id); if (!gallery) return;
+  const imgs = Array.from(gallery.querySelectorAll('img'));
+  let pending = imgs.length;
+  function onSettle() { pending--; if (pending <= 0) rebuildDots(id); }
+  imgs.forEach(img => {
+    if (img.style.display === 'none' && img.naturalWidth > 0) img.style.display = '';
+    if (img.complete) { if (img.naturalWidth === 0) removeGalleryImg(img); onSettle(); }
+    else {
+      img.addEventListener('load', onSettle, { once: true });
+      img.addEventListener('error', () => { removeGalleryImg(img); onSettle(); }, { once: true });
+    }
+  });
+  if (pending === 0) rebuildDots(id);
+}
+function closeM(e) {
+  if (e.target.classList.contains('moverlay')) { e.target.classList.remove('active'); document.body.style.overflow = ''; }
+}
+function closeById(id) { document.getElementById(id).classList.remove('active'); document.body.style.overflow = ''; }
+function gs(id, idx, e) {
+  if (e) e.stopPropagation();
+  const gallery = document.getElementById('g-' + id); if (!gallery) return;
+  const visible = Array.from(gallery.querySelectorAll('img')).filter(i => i.style.display !== 'none');
+  const dots = gallery.querySelectorAll('.gdot');
+  if (idx >= visible.length) idx = 0; if (idx < 0) idx = visible.length - 1;
+  gState[id] = idx;
+  visible.forEach((img, i) => img.classList.toggle('on', i === idx));
+  dots.forEach((d, i) => d.classList.toggle('on', i === idx));
+}
+function ga(id, dir, e) { if (e) e.stopPropagation(); gs(id, (gState[id] || 0) + dir); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.moverlay.active').forEach(m => { m.classList.remove('active'); document.body.style.overflow = ''; });
+  }
+});
+ 
+/* Carga de imágenes de tarjetas con fallback */
+(function(){
+  const cardImgs = {
+    'mazamitla': ['https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Mazamitla_Jalisco_Parroquia_San_Cristobal.jpg/1280px-Mazamitla_Jalisco_Parroquia_San_Cristobal.jpg','https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&q=80&w=900'],
+    'tapalpa': ['https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Tapalpa_Jalisco.jpg/1280px-Tapalpa_Jalisco.jpg','https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=900'],
+    'sanjuan': ['https://upload.wikimedia.org/wikipedia/commons/9/92/San_Juan_de_los_Lagos_-_Centro.jpg','https://images.unsplash.com/photo-1548625149-720fb4d26c7b?auto=format&fit=crop&q=80&w=900'],
+    'guayabitos': ['https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=900','https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&q=80&w=900'],
+    'tequila': ['https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Tequila%2C_Jalisco_%28pueblo%29.jpg/1280px-Tequila%2C_Jalisco_%28pueblo%29.jpg','https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=900'],
+    'guadalajara': ['https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Teatro_Degollado_en_Guadalajara.jpg/1280px-Teatro_Degollado_en_Guadalajara.jpg','https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?auto=format&fit=crop&q=80&w=900']
+  };
+  Object.keys(cardImgs).forEach(id => {
+    const card = document.querySelector(`[onclick="openM('${id}')"]`); if (!card) return;
+    const imgEl = card.querySelector('img'); if (!imgEl) return;
+    function tryLoad(urls, idx) {
+      if (idx >= urls.length) return;
+      const tester = new Image();
+      tester.onload = () => { imgEl.src = urls[idx]; imgEl.style.opacity = '1'; };
+      tester.onerror = () => tryLoad(urls, idx + 1);
+      tester.src = urls[idx];
+    }
+    imgEl.onerror = () => {
+      const urls = cardImgs[id]; const current = imgEl.src;
+      tryLoad(urls.filter(u => u !== current), 0);
+    };
+    if (imgEl.complete && imgEl.naturalWidth === 0) tryLoad(cardImgs[id], 0);
+  });
+})();
+ 
+/* "Otro destino": muestra campo de texto cuando se selecciona */
+(function(){
+  const sel = document.getElementById('fdestino');
+  const fg  = document.getElementById('fgOtroDestino');
+  const inp = document.getElementById('fotrodestino');
+  if(!sel) return;
+  sel.addEventListener('change', function(){
+    const isOtro = this.value === 'Otro destino';
+    fg.style.display = isOtro ? 'block' : 'none';
+    inp.required = isOtro;
+    if(isOtro){ setTimeout(()=>inp.focus(), 60); } else { inp.value = ''; }
+  });
+})();
+ 
+/* GPS */
+let gpsData = null;
+(function(){
+  const btn = document.getElementById('gpsBtn');
+  const note = document.getElementById('gpsNote');
+  if(!btn) return;
+  btn.addEventListener('click', function(){
+    if(!('geolocation' in navigator)){
+      if(note){ note.textContent = 'Tu navegador no permite compartir ubicación.'; note.style.display='block'; }
+      return;
+    }
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ubicando…';
+    if(note){ note.textContent = 'Permite el acceso a tu ubicación en el navegador…'; note.style.display='block'; }
+    navigator.geolocation.getCurrentPosition(
+      function(pos){
+        const lat = pos.coords.latitude.toFixed(6);
+        const lng = pos.coords.longitude.toFixed(6);
+        gpsData = { lat, lng, link: `https://www.google.com/maps?q=${lat},${lng}` };
+        btn.disabled = false; btn.classList.add('ok');
+        btn.innerHTML = '<i class="fas fa-circle-check"></i> Listo';
+        if(note){ note.textContent = 'Ubicación capturada. Se enviará junto con tu solicitud.'; note.style.display='block'; }
+        const sal = document.getElementById('fsalida');
+        if(sal && !sal.value.trim()){ sal.value = `Mi ubicación GPS (${lat}, ${lng})`; }
+      },
+      function(err){
+        btn.disabled = false; btn.innerHTML = original;
+        let m = 'No fue posible obtener tu ubicación.';
+        if(err.code === 1) m = 'Permiso denegado. Puedes escribir tu dirección manualmente.';
+        else if(err.code === 3) m = 'La ubicación tardó demasiado. Intenta de nuevo o escribe tu dirección.';
+        if(note){ note.textContent = m; note.style.display='block'; }
+      },
+      { enableHighAccuracy:true, timeout:10000, maximumAge:0 }
+    );
+  });
+})();
+ 
+/* Helper de fecha bonita */
+function fechaBonita(f){
+  if(!f) return '';
+  const dt = new Date(f + 'T00:00:00');
+  if(isNaN(dt)) return f;
+  let s = dt.toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+ 
+/* Envío de solicitud por WhatsApp — formato premium */
+function fechaTicket(f){
+  if(!f) return 'Por confirmar';
+  const d=new Date(f+'T00:00:00'); if(isNaN(d)) return f;
+  const dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const mes=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+  return dias[d.getDay()]+', '+String(d.getDate()).padStart(2,'0')+'/'+mes[d.getMonth()];
+}
+document.getElementById('fCot').addEventListener('submit',function(e){
+  e.preventDefault();
+  const n   = document.getElementById('fnombre').value.trim();
+  const sal = document.getElementById('fsalida').value.trim();
+  let   d   = document.getElementById('fdestino').value;
+  const otro= document.getElementById('fotrodestino').value.trim();
+  const u   = document.getElementById('funidad').value;
+  const f   = document.getElementById('ffecha').value;
+  const h   = document.getElementById('fhora').value;
+  const px  = document.getElementById('fpax').value;
+  const ds  = document.getElementById('fdias').value;
+
+  let destinoFinal = d;
+  if(d === 'Otro destino') destinoFinal = otro ? ('Otro: ' + otro) : 'Otro destino (por definir)';
+
+  const fechaFmt = fechaTicket(f);
+  const idSis = String(Math.floor(1000 + Math.random()*9000));
+
+  /* ── Mensaje formato TICKET VIP ── */
+  const M = [];
+  M.push('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓');
+  M.push('   ⚡ 𝗟𝗥 𝗧𝗥𝗔𝗡𝗦𝗣𝗢𝗥𝗧𝗘𝗦 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 ⚡');
+  M.push('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛');
+  M.push(' 🎫 𝗧𝗜𝗖𝗞𝗘𝗧 𝗗𝗘 𝗖𝗢𝗧𝗜𝗭𝗔𝗖𝗜𝗢́𝗡 𝗩𝗜𝗣 🎫');
+  M.push('');
+  M.push('👤 𝗧𝗜𝗧𝗨𝗟𝗔𝗥 𝗗𝗘 𝗟𝗔 𝗥𝗘𝗦𝗘𝗥𝗩𝗔');
+  M.push('▸ ' + n.toUpperCase());
+  M.push('╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌');
+  M.push('');
+  M.push('🗺️ 𝗜𝗧𝗜𝗡𝗘𝗥𝗔𝗥𝗜𝗢 𝗗𝗘 𝗥𝗨𝗧𝗔');
+  M.push('🟢 𝗢𝗥𝗜𝗚𝗘𝗡');
+  M.push(' └ ' + sal);
+  M.push('🔴 𝗗𝗘𝗦𝗧𝗜𝗡𝗢');
+  M.push(' └ ' + destinoFinal);
+  M.push('╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌');
+  M.push('');
+  M.push('⚙️ 𝗗𝗘𝗧𝗔𝗟𝗟𝗘𝗦 𝗢𝗣𝗘𝗥𝗔𝗧𝗜𝗩𝗢𝗦');
+  M.push('╭──────────────────────────────╮');
+  M.push(' │ 🚐 𝗨𝗡𝗜𝗗𝗔𝗗 : ' + u);
+  M.push(' │ 👥 𝗣𝗟𝗔𝗭𝗔𝗦 : ' + px + ' Pasajeros');
+  M.push(' │ 📅 𝗙𝗘𝗖𝗛𝗔  : ' + fechaFmt);
+  M.push(' │ ⏰ 𝗛𝗢𝗥𝗔   : ' + h + ' hrs');
+  M.push(' │ ⏳ 𝗧𝗜𝗘𝗠𝗣𝗢 : ' + ds + ' Día(s)');
+  M.push('╰──────────────────────────────╯');
+  M.push('╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌');
+  M.push('');
+  if(gpsData){
+    M.push('📍 𝗨𝗕𝗜𝗖𝗔𝗖𝗜𝗢́𝗡 𝗚𝗣𝗦 𝗘𝗫𝗔𝗖𝗧𝗔');
+    M.push('🔗 ' + gpsData.link);
+    M.push('');
+  }
+  M.push('██████████████████████████████');
+  M.push('║▌│█║▌│ █║▌│█│║▌║│█║▌│ █║▌│█');
+  M.push(' 𝖨𝖣 𝖣𝖤 𝖲𝖨𝖲𝖳𝖤𝖬𝖠: 𝖫𝖱-' + idSis);
+  M.push(' 🟢 𝗦𝗧𝗔𝗧𝗨𝗦: 𝗣𝗘𝗡𝗗𝗜𝗘𝗡𝗧𝗘 𝗗𝗘 𝗧𝗔𝗥𝗜𝗙𝗔');
+
+  const msg = M.join('\n');
+  const waLink = 'https://api.whatsapp.com/send?phone=' + WA_PHONE + '&text=' + encodeURIComponent(msg);
+  showTicket({ cliente:n, destino:destinoFinal, unidad:u, fecha:fechaFmt, pax:px, folio:idSis }, waLink);
+});
+ 
+/* ════════════════════════════════════════
+   TICKET VIP 3D — control
+════════════════════════════════════════ */
+function showTicket(d, waLink){
+  const ov = document.getElementById('tkOverlay');
+  if(!ov){ window.open(waLink,'_blank'); return; }
+  document.getElementById('tkCliente').textContent = d.cliente || '—';
+  document.getElementById('tkDestino').textContent = d.destino || '—';
+  document.getElementById('tkUnidad').textContent  = d.unidad  || '—';
+  document.getElementById('tkFecha').textContent   = d.fecha   || '—';
+  document.getElementById('tkPax').textContent     = (d.pax||'—') + ' pax';
+  const folio = d.folio ? ('LR-' + d.folio) : ('LR-' + Date.now().toString().slice(-6));
+  document.getElementById('tkFolio').textContent = folio;
+  document.getElementById('tkWa').setAttribute('href', waLink);
+  ov.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  fireConfetti();
+}
+function closeTicket(){
+  const ov = document.getElementById('tkOverlay');
+  if(!ov) return;
+  ov.classList.remove('active');
+  document.body.style.overflow = '';
+}
+(function(){
+  const ov = document.getElementById('tkOverlay');
+  const card = document.getElementById('tkCard');
+  const closeBtn = document.getElementById('tkClose');
+  if(!ov) return;
+  closeBtn.addEventListener('click', closeTicket);
+  ov.addEventListener('click', e=>{ if(e.target===ov) closeTicket(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeTicket(); });
+  /* cierra el ticket tras enviar a WhatsApp */
+  document.getElementById('tkWa').addEventListener('click', ()=> setTimeout(closeTicket, 400));
+  /* inclinación 3D con el mouse */
+  if(!('ontouchstart' in window)){
+    card.addEventListener('pointermove', e=>{
+      const r=card.getBoundingClientRect();
+      const rx=((e.clientY-r.top)/r.height-0.5)*-12;
+      const ry=((e.clientX-r.left)/r.width-0.5)*12;
+      card.style.transform=`rotateX(${rx}deg) rotateY(${ry}deg)`;
+    });
+    card.addEventListener('pointerleave', ()=>{ card.style.transform=''; });
+  }
+})();
+/* Confeti ligero (dorado + verde) */
+function fireConfetti(){
+  const cv = document.getElementById('tkConfetti');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const ov = document.getElementById('tkOverlay');
+  cv.width = ov.clientWidth; cv.height = ov.clientHeight;
+  const colors=['#C9922B','#E8B455','#F5CC7A','#00C4AA','#ffffff'];
+  const N=110;
+  const parts=Array.from({length:N},()=>({
+    x:cv.width/2+(Math.random()-0.5)*120,
+    y:cv.height/2-40,
+    vx:(Math.random()-0.5)*9,
+    vy:Math.random()*-11-3,
+    g:0.28+Math.random()*0.12,
+    s:Math.random()*6+3,
+    rot:Math.random()*6.28,
+    vr:(Math.random()-0.5)*0.4,
+    c:colors[(Math.random()*colors.length)|0],
+    life:0,max:80+Math.random()*40
+  }));
+  let raf;
+  function tick(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    let alive=false;
+    parts.forEach(p=>{
+      if(p.life>p.max) return;
+      alive=true;
+      p.life++; p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+      const a=p.life>p.max*0.7?1-(p.life-p.max*0.7)/(p.max*0.3):1;
+      ctx.save();
+      ctx.globalAlpha=Math.max(0,a);
+      ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.fillStyle=p.c;
+      ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.6);
+      ctx.restore();
+    });
+    if(alive) raf=requestAnimationFrame(tick);
+    else ctx.clearRect(0,0,cv.width,cv.height);
+  }
+  cancelAnimationFrame(raf); tick();
+}
+ 
+/* ════════════════════════════════════════
+   HERO · MAPA 3D MÉXICO / JALISCO (Three.js)
+════════════════════════════════════════ */
+function initGlobe(){
+  const wrap = document.getElementById('globe-wrap');
+  if(!wrap) return;
+  const fallback = document.getElementById('globe-fallback');
+  const tip = document.getElementById('map-tip');
+  function fail(){ if(fallback) fallback.classList.add('on'); }
+  if(!window.THREE){ return fail(); }
+  try{
+    const tc=document.createElement('canvas');
+    if(!(tc.getContext('webgl')||tc.getContext('experimental-webgl'))) return fail();
+  }catch(e){ return fail(); }
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W = wrap.clientWidth || 420, H = wrap.clientHeight || 460;
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(40, W/H, 0.1, 100);
+  camera.position.set(0, 0, 3.6);
+  const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  renderer.setSize(W,H);
+  wrap.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0x8899bb, 1.25));
+  const dir = new THREE.DirectionalLight(0xffffff, 1.1); dir.position.set(2,3,4); scene.add(dir);
+  const dir2 = new THREE.DirectionalLight(0xE8B455, 0.5); dir2.position.set(-3,-1,2); scene.add(dir2);
+
+  const root = new THREE.Group(); scene.add(root);
+  const spin = new THREE.Group(); root.add(spin);
+  const tilt = new THREE.Group(); spin.add(tilt);
+  tilt.rotation.x = -0.95;
+
+  /* ── Coordenadas (lng,lat) ── */
+  const mainland = [
+    [-114.72,32.62],[-112.5,31.9],[-111.07,31.33],[-108.2,31.33],[-106.45,31.77],[-104.5,29.7],[-102.3,29.88],[-101.4,29.77],[-100.0,28.7],[-99.5,27.5],[-97.86,25.84],
+    [-97.6,24.0],[-97.78,22.26],[-96.4,20.0],[-96.1,19.2],[-94.5,18.15],[-92.9,18.6],[-91.0,18.6],[-90.5,19.8],[-90.3,21.0],[-88.0,21.6],[-86.85,21.16],[-87.45,20.2],[-87.8,18.5],[-89.15,17.9],[-90.4,16.07],[-92.2,14.55],
+    [-94.0,16.2],[-95.2,16.2],[-96.5,15.7],[-99.9,16.85],[-101.6,17.65],[-103.5,18.4],[-105.25,20.65],[-105.7,21.5],[-106.4,23.2],[-108.9,25.8],[-109.4,27.0],[-110.9,27.9],[-112.2,29.0],[-113.1,31.0],[-114.72,32.62]
+  ];
+  const baja = [
+    [-117.1,32.5],[-116.0,31.0],[-115.5,29.5],[-114.5,27.8],[-113.5,26.5],[-112.2,25.0],[-111.6,24.2],[-110.0,23.0],[-109.9,22.9],[-109.5,23.6],[-110.6,24.2],[-111.3,25.7],[-112.0,27.0],[-112.8,28.0],[-113.5,29.5],[-114.5,30.5],[-114.8,31.8],[-114.72,32.62],[-117.1,32.5]
+  ];
+  const jalisco = [
+    [-105.7,21.6],[-104.5,22.6],[-103.0,22.5],[-101.8,21.6],[-101.5,20.4],[-102.3,19.5],[-103.5,19.0],[-104.7,19.3],[-105.6,20.4],[-105.7,21.6]
+  ];
+  const POIS = [
+    {id:'guadalajara', name:'Guadalajara', lng:-103.35, lat:20.67, star:true},
+    {id:'tequila',     name:'Tequila',     lng:-103.83, lat:20.88},
+    {id:'mazamitla',   name:'Mazamitla',   lng:-103.02, lat:19.91},
+    {id:'tapalpa',     name:'Tapalpa',      lng:-103.76, lat:19.94},
+    {id:'sanjuan',     name:'San Juan de los Lagos', lng:-102.33, lat:21.24},
+    {id:'guayabitos',  name:'Rincón de Guayabitos',  lng:-105.26, lat:21.02}
+  ];
+
+  /* ── Proyección equirectangular + normalizado ── */
+  const COSLAT = Math.cos(23*Math.PI/180);
+  function pr(lng,lat){ return [ (lng+103.35)*COSLAT, (lat-20.5) ]; }
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  function scan(arr){ arr.forEach(([lng,lat])=>{ const p=pr(lng,lat);
+    if(p[0]<minX)minX=p[0]; if(p[0]>maxX)maxX=p[0]; if(p[1]<minY)minY=p[1]; if(p[1]>maxY)maxY=p[1]; }); }
+  scan(mainland); scan(baja);
+  const cx=(minX+maxX)/2, cy=(minY+maxY)/2;
+  const k = 2.25 / Math.max(maxX-minX, maxY-minY);
+  function nrm(lng,lat){ const p=pr(lng,lat); return [ (p[0]-cx)*k, (p[1]-cy)*k ]; }
+
+  function shapeFrom(coords){
+    const s=new THREE.Shape();
+    const a=nrm(coords[0][0],coords[0][1]); s.moveTo(a[0],a[1]);
+    for(let i=1;i<coords.length;i++){ const c=nrm(coords[i][0],coords[i][1]); s.lineTo(c[0],c[1]); }
+    s.closePath(); return s;
+  }
+  function outline(coords, z, color, op){
+    const pts=coords.map(c=>{ const n=nrm(c[0],c[1]); return new THREE.Vector3(n[0],n[1],z); });
+    const g=new THREE.BufferGeometry().setFromPoints(pts);
+    return new THREE.Line(g, new THREE.LineBasicMaterial({color, transparent:true, opacity:op}));
+  }
+
+  const DEPTH=0.07;
+  const landMat = new THREE.MeshStandardMaterial({color:0x123c4f, metalness:0.15, roughness:0.85, emissive:0x06222e, emissiveIntensity:0.5});
+  const mex = new THREE.Mesh(new THREE.ExtrudeGeometry(shapeFrom(mainland), {depth:DEPTH, bevelEnabled:false}), landMat);
+  const baj = new THREE.Mesh(new THREE.ExtrudeGeometry(shapeFrom(baja),     {depth:DEPTH, bevelEnabled:false}), landMat.clone());
+  tilt.add(mex); tilt.add(baj);
+
+  const jalMat = new THREE.MeshStandardMaterial({color:0xC9922B, metalness:0.3, roughness:0.55, emissive:0x6b4910, emissiveIntensity:0.6});
+  const jal = new THREE.Mesh(new THREE.ExtrudeGeometry(shapeFrom(jalisco), {depth:DEPTH+0.03, bevelEnabled:false}), jalMat);
+  jal.position.z = 0.001; tilt.add(jal);
+
+  tilt.add(outline(mainland, DEPTH+0.002, 0x6fd0c4, 0.35));
+  tilt.add(outline(baja,     DEPTH+0.002, 0x6fd0c4, 0.35));
+  tilt.add(outline(jalisco,  DEPTH+0.045, 0xF5CC7A, 0.95));
+
+  /* ── Pines clicables ── */
+  const pickables=[];
+  const stemMat = new THREE.MeshBasicMaterial({color:0xE8B455, transparent:true, opacity:0.55});
+  POIS.forEach(poi=>{
+    const n=nrm(poi.lng,poi.lat);
+    const baseZ=DEPTH+0.05, topZ=baseZ + (poi.star?0.42:0.30);
+    const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006, topZ-baseZ, 6), stemMat);
+    stem.position.set(n[0], n[1], (baseZ+topZ)/2); stem.rotation.x=Math.PI/2; tilt.add(stem);
+    const col = poi.star?0x00E0C0:0xF5CC7A;
+    const sph=new THREE.Mesh(new THREE.SphereGeometry(poi.star?0.075:0.055, 18,18),
+      new THREE.MeshBasicMaterial({color:col}));
+    sph.position.set(n[0], n[1], topZ);
+    sph.userData={id:poi.id, name:poi.name, base:(poi.star?0.075:0.055), pulse:Math.random()*6};
+    tilt.add(sph); pickables.push(sph);
+    const halo=new THREE.Mesh(new THREE.SphereGeometry((poi.star?0.075:0.055)*1.7,16,16),
+      new THREE.MeshBasicMaterial({color:col, transparent:true, opacity:0.18}));
+    halo.position.copy(sph.position); sph.userData.halo=halo; tilt.add(halo);
+  });
+
+  /* ── Partículas flotantes ── */
+  const pcount=90, ppos=[];
+  for(let i=0;i<pcount;i++) ppos.push((Math.random()-0.5)*4,(Math.random()-0.5)*3,(Math.random()-0.5)*2+0.5);
+  const pg=new THREE.BufferGeometry(); pg.setAttribute('position',new THREE.Float32BufferAttribute(ppos,3));
+  const parts=new THREE.Points(pg,new THREE.PointsMaterial({color:0xC9922B,size:0.02,transparent:true,opacity:0.5}));
+  root.add(parts);
+
+  /* ── Interacción ── */
+  const ray=new THREE.Raycaster(), mouse=new THREE.Vector2(-2,-2);
+  let drag=false, lastX=0, dragYaw=0, tiltX=0, tiltY=0, hovered=null;
+  let hasPointer=false;
+
+  wrap.addEventListener('pointerdown',e=>{drag=true; lastX=e.clientX;});
+  window.addEventListener('pointerup',()=>{drag=false;});
+  wrap.addEventListener('pointerleave',()=>{ mouse.set(-2,-2); hasPointer=false; });
+  window.addEventListener('pointermove',e=>{
+    const r=wrap.getBoundingClientRect();
+    hasPointer = (e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom);
+    mouse.x=((e.clientX-r.left)/r.width)*2-1;
+    mouse.y=-(((e.clientY-r.top)/r.height)*2-1);
+    tiltX=((e.clientY-(r.top+r.height/2))/r.height)*-0.18;
+    tiltY=((e.clientX-(r.left+r.width/2))/r.width)*0.30;
+    if(drag){ dragYaw += (e.clientX-lastX)*0.006; lastX=e.clientX; }
+  });
+  wrap.addEventListener('click',()=>{ if(hovered && hovered.userData.id) openM(hovered.userData.id); });
+
+  function setTip(obj){
+    if(!tip) return;
+    if(!obj){ tip.classList.remove('on'); return; }
+    const v=obj.position.clone(); tilt.localToWorld(v); v.project(camera);
+    const r=wrap.getBoundingClientRect();
+    tip.style.left=((v.x*0.5+0.5)*r.width)+'px';
+    tip.style.top =((-v.y*0.5+0.5)*r.height)+'px';
+    tip.innerHTML='<i class="fas fa-location-dot"></i>'+obj.userData.name;
+    tip.classList.add('on');
+  }
+
+  const clock=new THREE.Clock();
+  function animate(){
+    requestAnimationFrame(animate);
+    const t=clock.getElapsedTime();
+    spin.rotation.y = (reduce?0:Math.sin(t*0.25)*0.22) + dragYaw;
+    root.rotation.x += (tiltX - root.rotation.x)*0.05;
+    root.rotation.y += (tiltY - root.rotation.y)*0.05;
+    parts.rotation.y = t*0.04;
+
+    pickables.forEach(p=>{
+      const s=p.userData.base*(1+Math.sin(t*2.5+p.userData.pulse)*0.12);
+      p.scale.setScalar(p===hovered?1.5:1);
+      if(p.userData.halo){ const hs=(p===hovered?2.2:1.6)+Math.sin(t*2.5+p.userData.pulse)*0.25;
+        p.userData.halo.scale.setScalar(hs); }
+    });
+
+    if(hasPointer && !drag){
+      ray.setFromCamera(mouse,camera);
+      const hits=ray.intersectObjects(pickables,false);
+      const obj=hits.length?hits[0].object:null;
+      if(obj!==hovered){ hovered=obj; setTip(obj); wrap.style.cursor=obj?'pointer':'grab'; }
+      else if(obj) setTip(obj);
+    } else if(hovered){ hovered=null; setTip(null); wrap.style.cursor='grab'; }
+
+    renderer.render(scene,camera);
+  }
+  animate();
+
+  window.addEventListener('resize',()=>{
+    W=wrap.clientWidth||W; H=wrap.clientHeight||H;
+    camera.aspect=W/H; camera.updateProjectionMatrix(); renderer.setSize(W,H);
+  });
+}
+window.addEventListener('load', initGlobe);
+
+/* ════════════════════════════════════════
+   INTERACCIONES DE PÁGINA
+════════════════════════════════════════ */
+/* Barra de progreso de scroll */
+(function(){
+  const bar=document.getElementById('progress');
+  if(!bar) return;
+  function upd(){
+    const h=document.documentElement.scrollHeight-innerHeight;
+    bar.style.width=(h>0?(scrollY/h)*100:0)+'%';
+  }
+  window.addEventListener('scroll',upd,{passive:true});
+  window.addEventListener('resize',upd); upd();
+})();
+
+/* Inclinación 3D en tarjetas (flota + destinos) */
+(function(){
+  if('ontouchstart' in window) return;
+  document.querySelectorAll('.fleet-card,.dc').forEach(card=>{
+    card.addEventListener('pointermove',e=>{
+      const r=card.getBoundingClientRect();
+      const rx=((e.clientY-r.top)/r.height-0.5)*-8;
+      const ry=((e.clientX-r.left)/r.width-0.5)*8;
+      card.style.transform=`perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-6px) scale(1.015)`;
+    });
+    card.addEventListener('pointerleave',()=>{ card.style.transform=''; });
+  });
+})();
+
+/* Botones magnéticos */
+(function(){
+  if('ontouchstart' in window) return;
+  document.querySelectorAll('.btn-gold,.nav-cta,.btn-submit').forEach(btn=>{
+    btn.addEventListener('pointermove',e=>{
+      const r=btn.getBoundingClientRect();
+      const mx=(e.clientX-r.left-r.width/2)*0.25;
+      const my=(e.clientY-r.top-r.height/2)*0.3;
+      btn.style.transform=`translate(${mx}px, ${my}px)`;
+    });
+    btn.addEventListener('pointerleave',()=>{ btn.style.transform=''; });
+  });
+})();
+
+/* ════════════════════════════════════════════════════════
+   PWA — registro del service worker + botón "Instalar app"
+   (siempre visible; usa el prompt nativo si está disponible,
+   o muestra instrucciones manuales si no)
+   ════════════════════════════════════════════════════════ */
+(function(){
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('service-worker.js').catch(err=>{
+        console.warn('No se pudo registrar el service worker:', err);
+      });
+    });
+  }
+
+  let deferredPrompt = null;
+  const installBtn = document.getElementById('pwa-install-btn');
+  const helpOverlay = document.getElementById('pwaHelpOverlay');
+  const helpClose = document.getElementById('pwaHelpClose');
+
+  window.addEventListener('beforeinstallprompt', (e)=>{
+    e.preventDefault();
+    deferredPrompt = e; /* se guarda para reusarlo en cada clic del botón */
+  });
+
+  function openHelp(){ if(helpOverlay) helpOverlay.classList.add('active'); }
+  function closeHelp(){ if(helpOverlay) helpOverlay.classList.remove('active'); }
+  if(helpClose) helpClose.addEventListener('click', closeHelp);
+  if(helpOverlay) helpOverlay.addEventListener('click', e=>{ if(e.target===helpOverlay) closeHelp(); });
+
+  if(installBtn){
+    installBtn.addEventListener('click', async ()=>{
+      if(deferredPrompt){
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        /* deferredPrompt NO se borra: así el botón sigue funcionando
+           para más intentos si el usuario cierra o cancela el aviso */
+      } else {
+        openHelp();
+      }
+    });
+  }
+
+  window.addEventListener('appinstalled', ()=>{
+    deferredPrompt = null;
+  });
+})();
+
+/* ════════════════════════════════════════════════════════
+   PANEL DE EDICIÓN DEL CLIENTE (Firebase + contraseña)
+   ════════════════════════════════════════════════════════ */
+(function(){
+  /* ── Cambia aquí la contraseña de acceso al panel ── */
+  const ADMIN_PASSWORD = "LR2026";
+
+  /* ── Elementos del panel (se configuran primero, SIEMPRE funcionan
+     aunque Firebase falle por falta de internet o bloqueos) ── */
+  const fab = document.getElementById('adm-fab');
+  const gate = document.getElementById('adm-gate');
+  const gateInput = document.getElementById('adm-pass');
+  const gateBtn = document.getElementById('adm-pass-btn');
+  const gateErr = document.getElementById('adm-gate-err');
+  const panel = document.getElementById('adm-panel');
+  const closeBtn = document.getElementById('adm-close');
+  const saveBtn = document.getElementById('adm-save');
+  const resetBtn = document.getElementById('adm-reset');
+  const statusEl = document.getElementById('adm-status');
+
+  /* El enlace "Editar" ahora es siempre visible en la esquina inferior izquierda */
+
+  function openGate(){ gate.classList.add('on'); gateInput.value=''; gateErr.style.display='none'; setTimeout(()=>gateInput.focus(),50); }
+  function closeGate(){ gate.classList.remove('on'); }
+  function closePanel(){ panel.classList.remove('on'); }
+
+  if(fab) fab.addEventListener('click', ()=>{ openGate(); });
+  if(gateBtn) gateBtn.addEventListener('click', ()=>{
+    if(gateInput.value === ADMIN_PASSWORD){ closeGate(); openPanel(); }
+    else{ gateErr.style.display='block'; }
+  });
+  if(gateInput) gateInput.addEventListener('keydown', e=>{ if(e.key==='Enter') gateBtn.click(); });
+  if(closeBtn) closeBtn.addEventListener('click', closePanel);
+
+  /* ── Configuración de Firebase (se conecta aparte; si falla,
+     el botón y el panel se siguen abriendo, solo no podrá guardar) ── */
+  let configRef = null;
+  try{
+    const firebaseConfig = {
+      apiKey: "AIzaSyBur1yKenJsQ5_UHZU8se3C5-XushebE3U",
+      authDomain: "transportes-lr.firebaseapp.com",
+      projectId: "transportes-lr",
+      storageBucket: "transportes-lr.firebasestorage.app",
+      messagingSenderId: "45658074175",
+      appId: "1:45658074175:web:74c2d946e662f3f3175c8a"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    configRef = db.collection('site').doc('config');
+  }catch(e){
+    console.warn('Firebase no se pudo inicializar (¿sin internet?). El panel abrirá igual.', e);
+  }
+
+  /* ── Valores originales (para "Restaurar") ── */
+  const DEFAULTS = {
+    colors: { gold:'#C9922B', goldL:'#E8B455', goldXL:'#F5CC7A', cyan:'#00C4AA', ink:'#0A0C10', off:'#F5F4EF' },
+    texts: {
+      eyebrow: 'Clase ejecutiva · Jalisco',
+      heroTitle1: 'Viaja con',
+      heroTitle2: 'confort real',
+      heroTitle3: 'a otro nivel.',
+      heroSub: 'Puntualidad impecable, flota premium y rutas en todo México. Traslados que hacen la diferencia desde Guadalajara.',
+      fleetLabel: 'Nuestra flota',
+      fleetH: 'Unidades de confort absoluto',
+      fleetSub: 'Tecnología y comodidad en cada kilómetro.',
+      fleet1Tag: 'Capacidad estándar',
+      fleet1Title: 'Nissan Urvan',
+      fleet1Desc: 'Ideal para grupos familiares, traslados corporativos y eventos locales. Amplio espacio interior con climatización integral.',
+      fleet2Tag: '★ Nivel ejecutivo',
+      fleet2Title: 'Mercedes-Benz Sprinter',
+      fleet2Desc: 'El estándar de oro para largas distancias. Doble zona climática, maletero amplio y sistema multimedia de vanguardia.',
+      destLabel: 'Destinos',
+      destH: 'Rutas culturales y paradisíacas',
+      destSub: 'Toca cualquier tarjeta para descubrir el itinerario, la leyenda, el mapa y la galería de cada destino.',
+      testiQuote: '"Contratamos el Sprinter para un viaje de empresa a Tequila. Todo impecable: puntualidad total, comodidad de primer nivel y el chofer increíblemente amable. Lo recomendaremos siempre."',
+      testiAuthor: 'Mariana G., Viaje corporativo · Guadalajara',
+      cotLabel: 'Cotización',
+      cotH1: 'Solicita tu cotización',
+      cotH2: 'en 1 minuto',
+      cotSub: 'Un asesor te responderá al instante por WhatsApp. Sin compromisos, sin costos ocultos.',
+      perk1Title: 'Respuesta inmediata',
+      perk1Desc: 'Te contactamos en menos de 10 minutos',
+      perk2Title: 'Precios transparentes',
+      perk2Desc: 'Sin costos ocultos ni sorpresas al final',
+      perk3Title: 'Viaje seguro garantizado',
+      perk3Desc: 'Unidades con seguro y operadores certificados',
+      footerCopy: '© 2026 Transportes LR · Logística de transporte turístico ejecutivo · Guadalajara, Jalisco'
+    },
+    images: {
+      heroImage: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=900',
+      fleetUrvan: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&q=80&w=700',
+      fleetSprinter: 'https://images.unsplash.com/photo-1620714223084-8fcacc6dfd8d?auto=format&fit=crop&q=80&w=700',
+      destMazamitla: 'https://www.adondeviajar.es/wp-content/uploads/2022/06/Visita-el-pueblo-magico-de-Mazamitla.jpg',
+      destTapalpa: 'https://panoramex.com/wp-content/uploads/2024/07/Tapalpa_town_things_to_do_Jalisco.jpg',
+      destSanjuan: 'https://thf.bing.com/th/id/R.4b518f2c15afecf947f3a383bca3f04d?rik=Ul0uHdGkNqB2SA&riu=http%3a%2f%2f2.bp.blogspot.com%2f-e96rx1xIU6U%2fVYsruXq2OEI%2fAAAAAAAABH4%2fkdUBK7yAgVw%2fs1600%2fBASILICA%252BDE%252BSAN%252BJUAN%252BDE%252BLOS%252BLAGOS.jpg&ehk=UYmBRj4%2fzW3qafA30K36iILEvQ6SwcnFm8psqVyXIJ0%3d&risl=&pid=ImgRaw&r=0',
+      destGuayabitos: 'https://i.pinimg.com/originals/0e/8f/af/0e8fafb270240620de94106104d4f64a.jpg',
+      destTequila: 'https://vivetequilajalisco.com/wp-content/uploads/2018/10/Tequila-1900x1080.jpg',
+      destGuadalajara: 'https://ik.imagekit.io/f8xal2viyc0/cities/a-close-up-of-a-yellow-building-description-autom.jpeg_Y0Q7jdbG4.webp'
+    },
+    contact: { waPhone: '523343194831' }
+  };
+
+  window.WA_PHONE = DEFAULTS.contact.waPhone;
+
+  function applyConfig(cfg){
+    if(!cfg) return;
+    const root = document.documentElement;
+    if(cfg.colors){
+      if(cfg.colors.gold) root.style.setProperty('--gold', cfg.colors.gold);
+      if(cfg.colors.goldL) root.style.setProperty('--gold-l', cfg.colors.goldL);
+      if(cfg.colors.goldXL) root.style.setProperty('--gold-xl', cfg.colors.goldXL);
+      if(cfg.colors.cyan) root.style.setProperty('--cyan', cfg.colors.cyan);
+      if(cfg.colors.ink) root.style.setProperty('--ink', cfg.colors.ink);
+      if(cfg.colors.off) root.style.setProperty('--off', cfg.colors.off);
+    }
+    if(cfg.texts){
+      document.querySelectorAll('[data-edit]').forEach(el=>{
+        const key = el.getAttribute('data-edit');
+        if(cfg.texts[key] !== undefined && cfg.texts[key] !== '') el.textContent = cfg.texts[key];
+      });
+    }
+    if(cfg.images){
+      Object.keys(cfg.images).forEach(key=>{
+        if(!cfg.images[key]) return;
+        document.querySelectorAll('[data-img="'+key+'"]').forEach(img=>{ img.src = cfg.images[key]; });
+      });
+    }
+    if(cfg.contact && cfg.contact.waPhone){
+      window.WA_PHONE = cfg.contact.waPhone;
+      document.querySelectorAll('[data-wa]').forEach(a=>{
+        try{
+          const url = new URL(a.getAttribute('href'), location.href);
+          if(url.hostname.includes('wa.me')){
+            url.pathname = '/' + cfg.contact.waPhone;
+          } else if(url.hostname.includes('whatsapp.com')){
+            url.searchParams.set('phone', cfg.contact.waPhone);
+          }
+          a.setAttribute('href', url.toString().replace(location.origin, '').replace(/^\/\//,'https://'));
+        }catch(e){}
+      });
+    }
+  }
+
+  /* Aplica configuración guardada al cargar la página */
+  if(configRef){
+    configRef.get().then(doc=>{
+      if(doc.exists) applyConfig(doc.data());
+    }).catch(()=>{ /* sin conexión o reglas no configuradas: se queda con los valores por defecto */ });
+  }
+
+  const TEXT_FIELDS = [
+    {key:'eyebrow', label:'Inicio — etiqueta pequeña'},
+    {key:'heroTitle1', label:'Inicio — título línea 1'},
+    {key:'heroTitle2', label:'Inicio — título línea 2 (dorada)'},
+    {key:'heroTitle3', label:'Inicio — título línea 3'},
+    {key:'heroSub', label:'Inicio — descripción', area:true},
+    {key:'fleetLabel', label:'Flota — etiqueta'},
+    {key:'fleetH', label:'Flota — título'},
+    {key:'fleetSub', label:'Flota — subtítulo'},
+    {key:'fleet1Tag', label:'Urvan — etiqueta'},
+    {key:'fleet1Title', label:'Urvan — nombre'},
+    {key:'fleet1Desc', label:'Urvan — descripción', area:true},
+    {key:'fleet2Tag', label:'Sprinter — etiqueta'},
+    {key:'fleet2Title', label:'Sprinter — nombre'},
+    {key:'fleet2Desc', label:'Sprinter — descripción', area:true},
+    {key:'destLabel', label:'Destinos — etiqueta'},
+    {key:'destH', label:'Destinos — título'},
+    {key:'destSub', label:'Destinos — subtítulo', area:true},
+    {key:'testiQuote', label:'Testimonio — cita', area:true},
+    {key:'testiAuthor', label:'Testimonio — autor'},
+    {key:'cotLabel', label:'Cotizar — etiqueta'},
+    {key:'cotH1', label:'Cotizar — título línea 1'},
+    {key:'cotH2', label:'Cotizar — título línea 2'},
+    {key:'cotSub', label:'Cotizar — subtítulo', area:true},
+    {key:'perk1Title', label:'Beneficio 1 — título'},
+    {key:'perk1Desc', label:'Beneficio 1 — descripción'},
+    {key:'perk2Title', label:'Beneficio 2 — título'},
+    {key:'perk2Desc', label:'Beneficio 2 — descripción'},
+    {key:'perk3Title', label:'Beneficio 3 — título'},
+    {key:'perk3Desc', label:'Beneficio 3 — descripción'},
+    {key:'footerCopy', label:'Pie de página', area:true}
+  ];
+
+  function buildTextFields(cfgTexts){
+    const container = document.getElementById('text-fields');
+    if(!container) return;
+    container.innerHTML = TEXT_FIELDS.map(f => `
+      <div class="adm-row">
+        <label>${f.label}</label>
+        ${f.area
+          ? `<textarea data-key="${f.key}" id="tx-${f.key}"></textarea>`
+          : `<input type="text" data-key="${f.key}" id="tx-${f.key}">`}
+      </div>
+    `).join('');
+    TEXT_FIELDS.forEach(f=>{
+      document.getElementById('tx-'+f.key).value = (cfgTexts && cfgTexts[f.key] !== undefined && cfgTexts[f.key] !== '') ? cfgTexts[f.key] : DEFAULTS.texts[f.key];
+    });
+  }
+
+  function collectTextFields(){
+    const out = {};
+    TEXT_FIELDS.forEach(f=>{
+      const el = document.getElementById('tx-'+f.key);
+      if(el) out[f.key] = el.value;
+    });
+    return out;
+  }
+
+  const PHOTO_FIELDS = [
+    {key:'heroImage', label:'Imagen principal (hero)'},
+    {key:'fleetUrvan', label:'Nissan Urvan'},
+    {key:'fleetSprinter', label:'Mercedes Sprinter'},
+    {key:'destMazamitla', label:'Mazamitla'},
+    {key:'destTapalpa', label:'Tapalpa'},
+    {key:'destSanjuan', label:'San Juan de los Lagos'},
+    {key:'destGuayabitos', label:'Rincón de Guayabitos'},
+    {key:'destTequila', label:'Tequila'},
+    {key:'destGuadalajara', label:'Guadalajara'}
+  ];
+  let imageState = Object.assign({}, DEFAULTS.images);
+
+  function compressImage(file, cb){
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const maxW = 480;
+        const scale = Math.min(1, maxW / img.width);
+        const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        cb(canvas.toDataURL('image/jpeg', 0.62));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function buildPhotoFields(){
+    const container = document.getElementById('photo-fields');
+    if(!container) return;
+    container.innerHTML = PHOTO_FIELDS.map(f => `
+      <div class="adm-photo-row">
+        <img class="adm-photo-thumb" id="thumb-${f.key}" src="${imageState[f.key]||''}">
+        <div class="adm-photo-info">
+          <label>${f.label}</label>
+          <input type="file" accept="image/*" data-key="${f.key}" class="adm-photo-input">
+        </div>
+      </div>
+    `).join('');
+    container.querySelectorAll('.adm-photo-input').forEach(inp=>{
+      inp.addEventListener('change', e=>{
+        const file = e.target.files[0];
+        if(!file) return;
+        const key = inp.getAttribute('data-key');
+        compressImage(file, dataUrl=>{
+          imageState[key] = dataUrl;
+          const thumb = document.getElementById('thumb-'+key);
+          if(thumb) thumb.src = dataUrl;
+        });
+      });
+    });
+  }
+
+  function fillFormFrom(cfg){
+    const c = cfg.colors||{}, t = cfg.texts||{}, i = cfg.images||{}, ct = cfg.contact||{};
+    document.getElementById('c-gold').value   = c.gold   || DEFAULTS.colors.gold;
+    document.getElementById('c-goldl').value  = c.goldL  || DEFAULTS.colors.goldL;
+    document.getElementById('c-goldxl').value = c.goldXL || DEFAULTS.colors.goldXL;
+    document.getElementById('c-cyan').value   = c.cyan   || DEFAULTS.colors.cyan;
+    document.getElementById('c-ink').value    = c.ink    || DEFAULTS.colors.ink;
+    document.getElementById('c-off').value    = c.off    || DEFAULTS.colors.off;
+    document.getElementById('ct-wa').value     = ct.waPhone ?? DEFAULTS.contact.waPhone;
+    buildTextFields(t);
+    imageState = Object.assign({}, DEFAULTS.images, i);
+    buildPhotoFields();
+  }
+
+
+  function openPanel(){
+    if(configRef){
+      configRef.get().then(doc=>{ fillFormFrom(doc.exists?doc.data():{}); }).catch(()=>{ fillFormFrom({}); });
+    } else {
+      fillFormFrom({});
+    }
+    panel.classList.add('on');
+  }
+  saveBtn.addEventListener('click', ()=>{
+    const cfg = {
+      colors: {
+        gold: document.getElementById('c-gold').value,
+        goldL: document.getElementById('c-goldl').value,
+        goldXL: document.getElementById('c-goldxl').value,
+        cyan: document.getElementById('c-cyan').value,
+        ink: document.getElementById('c-ink').value,
+        off: document.getElementById('c-off').value
+      },
+      texts: collectTextFields(),
+      images: imageState,
+      contact: { waPhone: document.getElementById('ct-wa').value.replace(/[^0-9]/g,'') }
+    };
+    if(!configRef){ statusEl.textContent = 'Sin conexión a la base de datos.'; return; }
+    statusEl.textContent = 'Guardando…';
+    configRef.set(cfg, {merge:true}).then(()=>{
+      applyConfig(cfg);
+      statusEl.textContent = '✔ Cambios guardados';
+      setTimeout(()=>{ statusEl.textContent=''; }, 2500);
+    }).catch(err=>{
+      if(String(err).includes('longer than') || String(err).includes('exceeds')){
+        statusEl.textContent = 'Las fotos pesan demasiado juntas. Prueba con fotos más pequeñas.';
+      } else {
+        statusEl.textContent = 'Error al guardar. Revisa tu conexión.';
+      }
+      console.error(err);
+    });
+  });
+
+  resetBtn.addEventListener('click', ()=>{
+    if(!confirm('¿Restaurar todos los valores originales de la página?')) return;
+    fillFormFrom(DEFAULTS);
+    if(!configRef){ statusEl.textContent = 'Sin conexión a la base de datos.'; return; }
+    statusEl.textContent = 'Guardando…';
+    configRef.set(DEFAULTS).then(()=>{
+      applyConfig(DEFAULTS);
+      statusEl.textContent = '✔ Restaurado';
+      setTimeout(()=>{ statusEl.textContent=''; }, 2500);
+    }).catch(err=>{ statusEl.textContent = 'Error al guardar.'; console.error(err); });
+  });
+})();
+</script>
+</body>
+</html>
